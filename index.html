@@ -21,7 +21,7 @@ html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;min-height:100%;background-color:var(--bg);background-image:radial-gradient(var(--dots) 1.5px,transparent 1.5px);background-size:8px 8px;color:var(--ink);font-family:'VT323',ui-monospace,Menlo,monospace;font-size:20px;line-height:1.2;-webkit-tap-highlight-color:transparent}
 button,select,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
-.wrap{max-width:960px;margin:0 auto;padding:8px 10px}
+.wrap{max-width:1280px;margin:0 auto;padding:8px 10px}
 .logo{font-family:'Silkscreen','Courier New',monospace;font-size:24px;color:var(--note);text-shadow:3px 3px 0 #000;margin:0}
 .hud{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;margin-bottom:6px}
 .stats{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -51,7 +51,9 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 .ab button{width:64px;height:64px;border-radius:50%}
 .ab .a{background:var(--note);color:var(--noteInk)}
 .keys{color:var(--muted);font-size:17px;text-align:center}
-@media (pointer:fine){.pad .dpad,.pad .ab{opacity:.85}}
+@media (hover:hover) and (pointer:fine){.pad{display:none}}
+.kbhint{color:var(--muted)}
+@media (hover:none),(pointer:coarse){.kbhint{display:none}}
 @media (max-width:600px){.logo{font-size:18px}.stat,.hbtn{font-size:17px;padding:0 6px}.hud{gap:4px}.keys{display:none}.dpad{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px)}.ab button{width:58px;height:58px}.pad{margin-top:6px}.tree{width:42%}}
 .screen{position:fixed;inset:0;z-index:40;overflow-y:auto;background-color:var(--bg);background-image:radial-gradient(var(--dots) 1.5px,transparent 1.5px);background-size:8px 8px;padding:20px 12px;padding-top:calc(20px + env(safe-area-inset-top,0px))}
 .win{background:var(--panel);border:3px solid var(--edge);box-shadow:5px 5px 0 var(--edge);margin:0 auto 16px;max-width:640px}
@@ -356,7 +358,7 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
     </div>
   </div>
   <div class="stage" id="stage"><canvas id="cv"></canvas><div id="dlgbox"></div><div id="pausebox"></div></div>
-  <div class="hint"><span id="h-goal" class="obj"></span><span id="h-face"></span></div>
+  <div class="hint"><span id="h-goal" class="obj"></span><span><span id="h-face"></span> <span class="kbhint">&nbsp;&middot; Move: Arrows/WASD &middot; A: Space &middot; B: Esc</span></span></div>
   <div id="coach-inline"></div>
   <div class="pad">
     <div class="dpad">
@@ -1369,8 +1371,8 @@ function bubble(c,px,py,t,ch){const b=Math.floor(t/300)%2;py-=b;R(c,"#1a1612",px
 function resize(){
   const st=document.getElementById("stage");if(!st)return;const w=st.clientWidth||360;DPR=Math.min(window.devicePixelRatio||1,2);
   SCALE=Math.max(2,Math.floor(w/(TS*16)));VW=w/(TS*SCALE);
-  const top=st.getBoundingClientRect().top+window.scrollY;const avail=window.innerHeight-top-(window.innerWidth<600?275:160);
-  const maxH=Math.max(TS*SCALE*7,Math.min(avail,window.innerHeight*0.62));VH=Math.min(MH,Math.max(7,Math.floor(maxH/(TS*SCALE))));
+  const padOn=getComputedStyle(document.querySelector(".pad")).display!=="none";const top=st.getBoundingClientRect().top;const avail=window.innerHeight-top-(padOn?(window.innerWidth<600?275:170):56);
+  const maxH=Math.max(TS*SCALE*7,Math.min(avail,window.innerHeight*(padOn?0.62:0.9)));VH=Math.min(MH,Math.max(7,Math.floor(maxH/(TS*SCALE))));
   cv.width=Math.round(w*DPR);cv.height=Math.round(VH*TS*SCALE*DPR);cv.style.height=(VH*TS*SCALE)+"px";st.style.setProperty("--stageH",(VH*TS*SCALE)+"px");
 }
 function solidAt(x,y){if(x<0||y<0||x>=MW||y>=MH)return true;if(TILES[y][x]==="w")return true;const o=OBJS[x+","+y];if(o&&o.type!=="chair")return true;
