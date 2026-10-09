@@ -76,6 +76,16 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 .qs{display:flex;flex-direction:column;align-items:stretch}
 .qs .btn{text-align:left}
 
+.roles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:10px}
+.role{text-align:left;background:var(--panel2);border:3px solid var(--edge);box-shadow:3px 3px 0 var(--edge);padding:8px 10px;display:flex;flex-direction:column;gap:3px}
+.role.on{background:#27457d;color:#fff}
+.role.soon{opacity:.55;filter:grayscale(.6);box-shadow:none;border-style:dashed}
+.role .rn{font-family:"Silkscreen",monospace;font-size:12px;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.role .rn .tag{margin-left:0}
+#screen .win{max-width:780px}
+.role .rd{font-size:17px;line-height:1.1}
+.tag.soon{background:#6b6250;color:#ece3cb}
+.nextday{margin:0 0 12px;font-size:19px}
 .daytabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .dtab{text-align:left;background:var(--panel2);border:3px solid var(--edge);box-shadow:3px 3px 0 var(--edge);padding:8px 10px;display:flex;flex-direction:column;gap:2px}
 .dtab.on{background:#27457d;color:#fff}
@@ -893,7 +903,7 @@ function sendHome(id){const n=NPCS.find(x=>x.id===id);if(!n)return;const[x,y]=DE
 function endShift(){
   S.screen="end";S.modal=null;S.dlg=null;S.pc.open=false;
   for(const tk of S.tickets)if(tk.status==="open"||tk.status==="waiting")tk.result={total:0,lines:["Not resolved before the end of the shift."],missed:true};
-  saveBest(totalScore());clearSave();renderUI();
+  saveBest(totalScore());clearSave();setDayDone(S.day||1);renderUI();
 }
 function totalScore(){return S.tickets.reduce((a,t)=>a+(t.result?t.result.total:0),0)}
 function counted(){return S.tickets.filter(t=>t.status!=="skipped")}
@@ -1710,6 +1720,18 @@ function introScript2(){const M="Mike Troy";return[
   {t:"say",spk:M,text:"Remember: read the form, change only what's approved, and if something smells like an attack, Security gets it. Have a good one!"},
   {t:"fn",f:()=>{placeAfterIntro()}}]}
 
+const ROLES=[
+ {name:"Tier 1 Help Desk",open:true,desc:"Answer calls, help walk-ups, and handle accounts in Active Directory. Where every IT career starts."},
+ {name:"Desktop Support",open:false,desc:"Laptops, printers, imaging, and hardware swaps. Get out from behind the desk."},
+ {name:"Systems Administrator",open:false,desc:"Servers, Group Policy, backups, and patching. Keep the lights on."},
+ {name:"Network Technician",open:false,desc:"Switches, Wi-Fi, VPN, and DNS. Find out why the internet is \"down\"."},
+ {name:"SOC Analyst",open:false,desc:"Alerts, phishing, and incident response. Catch the attackers."}];
+const PROG_KEY="ticketrush-progress";
+function getProgress(){try{return JSON.parse(localStorage.getItem(PROG_KEY)||"{}")}catch(e){return{}}}
+function setDayDone(day){try{const p=getProgress();p.tier1=Math.max(p.tier1||0,day);localStorage.setItem(PROG_KEY,JSON.stringify(p))}catch(e){}}
+function maxDay(){return Math.max(...Object.keys(DAYS).map(Number))}
+function allDaysDone(){return (getProgress().tier1||0)>=maxDay()}
+function nextDayNum(){const done=getProgress().tier1||0;return done>=maxDay()?maxDay():done+1}
 const DAYS={1:{tickets:TICKETS1,waves:WAVES1,name:"Day 1: Orientation",desc:"10 tickets: password resets, lockouts, a new hire, a transfer, a termination, and your first social engineering call."},2:{tickets:TICKETS2,waves:WAVES2,name:"Day 2: Account Admin",desc:"8 tickets: password settings, distribution lists, return from leave, a name change, a suspicious lockout, Group Policy, a rehire, and contractor end dates."}};
 function luisHome(){const n=S.npc["luis.ortega"];n.gossip=false;sendHome("luis.ortega")}
 
@@ -2068,10 +2090,11 @@ function loop(ts){
    UI RENDER
    ========================================================= */
 function renderTitle(){const best=bestScore();return`<h1 class="logo" style="text-align:center;font-size:44px;margin:16px 0 18px">Ticket Rush</h1>
- <div class="win"><h2><span>Ridgeline Logistics: IT Help Desk</span><span>Day ${window.TITLE_DAY||1}</span></h2><div class="wb">
+ <div class="win"><h2><span>Ridgeline Logistics: IT Help Desk</span><span>Tier 1 &middot; Day ${nextDayNum()}</span></h2><div class="wb">
  <p style="margin-top:0">You're the new Tier 1 tech at Ridgeline Logistics. Answer calls, help walk-ups, and work tickets in Active Directory. Fix what you can, escalate what you can't, and document everything.</p>
- <h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin-bottom:6px">Choose your day</h3>
- <div class="daytabs">${Object.entries(DAYS).map(([k,d])=>`<button class="dtab ${String(window.TITLE_DAY||1)===k?"on":""}" data-a="pickday" data-day="${k}"><span class="dn">${d.name}</span><span class="dd">${d.desc}</span></button>`).join("")}</div>
+ <h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin-bottom:6px">Choose your role</h3>
+ <div class="roles">${ROLES.map(r=>`<div class="role ${r.open?"on":"soon"}" ${r.open?"":'aria-disabled="true"'}><span class="rn">${r.name}${r.open?' <span class="tag">Selected</span>':' <span class="tag soon">Coming soon</span>'}</span><span class="rd">${r.desc}</span></div>`).join("")}</div>
+ <p class="nextday"><b>${nextDayNum()>1?"Next shift":"Your first shift"}:</b> ${DAYS[nextDayNum()].name}. ${DAYS[nextDayNum()].desc}${allDaysDone()?" <i>You've finished every Tier 1 day so far. More are coming soon!</i>":""}</p>
  <h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin-bottom:6px">Choose your difficulty</h3>
  ${hasSave()?`<div class="diffs"><button class="diff rec" data-a="continue"><span class="dn">Continue your shift <span class="tag">Saved</span></span><span class="dd">${esc(saveSummary(readSave()))}</span></button></div><h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin:0 0 6px">Or start a new shift</h3>`:""}
  <div class="diffs">${Object.entries(DIFF).map(([k,d])=>`<button class="diff ${k==="beginner"&&!hasSave()?"rec":""}" data-a="start" data-diff="${k}"><span class="dn">${d.label}${k==="beginner"?' <span class="tag">Recommended</span>':""}</span><span class="dd">${d.desc}</span></button>`).join("")}</div>
@@ -2085,7 +2108,7 @@ function renderEnd(){
   <p class="big">${avg}<span class="meta" style="font-size:18px"> average</span></p><p>Rank: <b>${rank}</b> &middot; Total ${total}</p>
   ${S.tickets.some(t=>t.status==="skipped")?'<p class="green">Bonus: you set up Priya correctly, so ticket #1006 never happened.</p>':""}
   ${list.map(t=>`<div class="scoreRow"><span>#${t.id} ${esc(t.title)}</span><span class="${t.result.total>=70?"green":t.result.total<40?"red":""}">${t.result.total}</span></div><p class="meta" style="margin:2px 0 8px">${esc(t.result.lines[0]||"")}</p>`).join("")}
-  ${(S.day||1)===1?`<button class="btn primary" data-a="nextday" style="font-family:Silkscreen,monospace">Go to Day 2</button>`:""}<button class="btn ${(S.day||1)===1?"":"primary"}" data-a="title" style="font-family:Silkscreen,monospace">Back to title</button></div></div>`}
+  ${DAYS[(S.day||1)+1]?`<button class="btn primary" data-a="nextday" style="font-family:Silkscreen,monospace">Start Day ${(S.day||1)+1}</button>`:`<p class="meta">That's every Tier 1 day for now. More days and new roles are coming soon!</p>`}<button class="btn ${DAYS[(S.day||1)+1]?"":"primary"}" data-a="title" style="font-family:Silkscreen,monospace">Back to title</button></div></div>`}
 function renderModal(){
   if(!S.modal)return"";if(S.modal.type==="settings")return renderSettings();if(S.modal.type==="help")return renderHelp();const tk=T(S.modal.id);
   if(S.modal.type==="note")return`<div class="modal"><div class="win" role="dialog" aria-modal="true"><h2><span>Resolution note INC0${tk.id}</span></h2><div class="wb"><p style="margin-top:0">Pick the note to attach before closing:</p><div class="qs">${tk.notes.map((n,i)=>`<button class="btn" data-a="note" data-i="${i}">${esc(n.t)}</button>`).join("")}</div><button class="btn" data-a="mclose">Back</button></div></div></div>`;
@@ -2129,9 +2152,8 @@ document.addEventListener("click",e=>{
   if(!b||b.disabled)return;
   const d=b.dataset,a=d.a,id=d.id?Number(d.id):null;
   switch(a){
-   case"start":if(hasSave()&&!confirm("Start a new shift? This replaces your saved game."))return;sfx.blip();clearSave();newGame(d.diff,{day:window.TITLE_DAY||1});return;
-   case"pickday":window.TITLE_DAY=Number(d.day);renderUI();return;
-   case"nextday":window.TITLE_DAY=2;S={screen:"title"};renderUI();return;
+   case"start":if(hasSave()&&!confirm("Start a new shift? This replaces your saved game."))return;sfx.blip();clearSave();newGame(d.diff,{day:nextDayNum()});return;
+   case"nextday":{const df=S.diff||"beginner";clearSave();sfx.blip();newGame(df,{day:(S.day||1)+1});return}
    case"continue":sfx.blip();loadGame();return;
    case"skip-intro":endCut();return;
    case"savequit":saveGame();S={screen:"title"};document.getElementById("coach").innerHTML="";document.getElementById("callpanel").innerHTML="";renderUI();return;
