@@ -95,6 +95,15 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 .coachcard.pcm{bottom:calc(52px + env(safe-area-inset-bottom,0px))}
 @media (max-width:600px){.coachcard{top:calc(6px + env(safe-area-inset-top,0px));bottom:auto;right:6px;font-size:18px}}
 .helpwin{max-width:720px}
+#cutcard{position:fixed;inset:0;z-index:75;background:#0b0a09;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+#cutcard.fade{animation:ccOut .5s forwards}
+#cutcard .cc-in{animation:ccIn .9s ease-out both}
+.cc-t{font-family:'Silkscreen',monospace;font-size:clamp(30px,6vw,64px);color:#f2d45c;text-shadow:4px 4px 0 #b8392e,7px 7px 0 #000;letter-spacing:3px}
+.cc-s{font-family:'VT323',monospace;font-size:clamp(20px,3vw,30px);color:#ece3cb;margin-top:14px}
+@keyframes ccIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes ccOut{to{opacity:0}}
+#skipintro{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:16px;z-index:90;font-size:20px}
+@media (prefers-reduced-motion:reduce){#cutcard .cc-in,#cutcard.fade{animation:none}}
 #waveban{position:fixed;inset:0;z-index:80;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .wb-band{width:100%;background:repeating-linear-gradient(-45deg,#1a1612 0 18px,#262019 18px 36px);border-top:5px solid #f2d45c;border-bottom:5px solid #f2d45c;padding:18px 10px 20px;text-align:center;box-shadow:0 0 0 100vmax rgba(0,0,0,.4);animation:wbIn 2.6s cubic-bezier(.2,.8,.2,1) forwards}
 .wb-big{font-family:'Silkscreen',monospace;font-size:clamp(40px,9vw,92px);line-height:1;color:#f2d45c;text-shadow:4px 4px 0 #b8392e,8px 8px 0 #000;letter-spacing:4px}
@@ -382,6 +391,8 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 <div id="pc" class="pc" hidden></div>
 <div id="modal"></div>
 <div id="coach"></div>
+<div id="cutcard" hidden></div>
+<button id="skipintro" class="hbtn" data-a="skip-intro" hidden>Skip intro &#9193;</button>
 <div id="waveban" hidden></div>
 <div id="callpanel"></div>
 <div id="tutring" hidden></div>
@@ -480,13 +491,14 @@ function initAD(){
     "leila.haddad":mkU("Leila","Haddad",OU.ops,"Customs Compliance Specialist","Operations",["GG_Ops_Share", "VPN_Users", "Printers_Floor1"],{"office": "O-13", "manager": "Carla Diaz", "phone": "x2627"}),
     "tran.nguyen":mkU("Tran","Nguyen",OU.ops,"Forklift Operator","Operations",["GG_Ops_Share", "Printers_Floor1"],{"office": "Warehouse", "manager": "Diego Morales", "phone": "x2628"}),
     "samira.khan":mkU("Samira","Khan",OU.it,"Network Administrator (Tier 2)","IT",["IT_Admins", "VPN_Users", "Printers_Floor1"],{"office": "IT-3", "manager": "", "phone": "x2629"}),
-    "marisol.vega":mkU("Marisol","Vega",OU.it,"IT Manager","IT",["IT_Admins", "VPN_Users", "Printers_Floor1"],{"office": "IT-1", "manager": "", "phone": "x2630"}),
+    "marisol.vega":mkU("Marisol","Vega",OU.it,"IT Director","IT",["IT_Admins", "VPN_Users", "Printers_Floor1"],{"office": "IT-1", "manager": "", "phone": "x2630"}),
     "chinedu.eze":mkU("Chinedu","Eze",OU.con,"Contract Developer","IT",["Printers_Floor1"],{"office": "Remote", "manager": "Marisol Vega", "phone": "x2631", "expires": "2026-12-31", "desc": "Contractor - sponsor: Marisol Vega"}),
     "ingrid.larsen":mkU("Ingrid","Larsen",OU.con,"Contract Auditor","Finance",["GG_Finance_ReadOnly", "Printers_Floor1"],{"office": "F-08", "manager": "Sofia Kowalski", "phone": "x2632", "expires": "2026-11-30", "desc": "Contractor - sponsor: Sofia Kowalski"}),
     "bao.tran":mkU("Bao","Tran",OU.con,"Temp Warehouse Associate","Operations",["Printers_Floor1"],{"office": "Warehouse", "manager": "Diego Morales", "phone": "x2633", "expires": "2026-10-31", "desc": "Contractor - sponsor: Diego Morales"}),
     "patrick.murphy":mkU("Patrick","Murphy",OU.dis,"Sales Rep","Sales",[],{"enabled": false, "desc": "Terminated 08/15/2026 - HR-198"}),
     "valentina.rossi":mkU("Valentina","Rossi",OU.dis,"Accountant","Finance",[],{"enabled": false, "desc": "Terminated 06/30/2026 - HR-176"}),
     "kenji.watanabe":mkU("Kenji","Watanabe",OU.dis,"Dispatcher","Operations",[],{"enabled": false, "desc": "Resigned 09/12/2026 - HR-210"}),
+    "mike.troy":mkU("Mike","Troy",OU.it,"IT Service Desk Manager","IT",["IT_Admins","VPN_Users",P],{office:"IT-1",phone:"x2001",manager:"Marisol Vega"}),
     "rick.alvarez":mkU("Rick","Alvarez",OU.it,"Systems Administrator (Tier 2)","IT",["IT_Admins","VPN_Users",P],{office:"IT-2",phone:"x2002"}),
     "administrator":mkU("Administrator","",  "Users","","",["Domain Admins","Enterprise Admins","Schema Admins"],{name:"Administrator",desc:"Built-in account for administering the computer/domain",system:true,email:"",created:"2019-06-02"}),
     "guest":mkU("Guest","","Users","","",[],{name:"Guest",enabled:false,desc:"Built-in account for guest access to the computer/domain",system:true,email:"",created:"2019-06-02"}),
@@ -731,10 +743,11 @@ const TICKETS=[
    WORLD
    ========================================================= */
 const MW=30,MH=18,TS=16;
-const DESKS={"PC":[3,2],"IT-2":[8,3],"S-01":[13,2],"S-04":[16,2],"S-09":[19,2],"S-12":[13,4],"F-01":[23,2],"F-02":[26,2],"CFO":[24,4],"H-01":[3,12],"H-03":[6,12],"O-03":[23,12],"O-11":[26,12],"O-15":[24,15]};
+const DESKS={"PC":[3,2],"IT-1":[9,4],"IT-2":[8,3],"S-01":[13,2],"S-04":[16,2],"S-09":[19,2],"S-12":[13,4],"F-01":[23,2],"F-02":[26,2],"CFO":[24,4],"H-01":[3,12],"H-03":[6,12],"O-03":[23,12],"O-11":[26,12],"O-15":[24,15]};
 const WALKUP_SPOTS=[[6,3],[6,4],[5,4]];
 function pal(skin,hair,shirt,pants,long){return{skin,hair,shirt,pants,long:!!long}}
 const NPCS=[
+ {id:"mike.troy",desk:"IT-1",pal:pal("#d9a582","#4a3423","#eef2f6","#2a2f45")},
  {id:"rick.alvarez",desk:"IT-2",pal:pal("#c68e6a","#2b1d14","#4b6b8a","#2a2a2a")},
  {id:"kevin.tran",desk:"S-01",pal:pal("#e9c29f","#151515","#2f5d9e","#333")},
  {id:"dana.brooks",desk:"S-04",pal:pal("#f1c7a5","#8a4b22","#c0504d","#3a3f55",true)},
@@ -751,23 +764,24 @@ const NPCS=[
 const NAMES={"priya.shah":"Priya Shah","rick.alvarez":"Rick Alvarez"};
 const PLAYER_PAL={skin:"#c99a74",hair:"#1a120c",shirt:"#2f7f7a",pants:"#2b2f3a",long:false,badge:true};
 const FLAVOR={
- "rick.alvarez":["I'm Rick, Tier 2. Stuck? Open the account's Properties first. The Account tab tells you a lot: lockout, expiration, password options.","Pro tip: in AD, turn on View > Advanced Features. You'll get an Attribute Editor tab with badPwdCount and pwdLastSet.","\"Same access as so-and-so\"? Right-click their account and choose Copy. It brings group memberships along.","Never drop someone in an admin group to fix a permission problem. Find the right group instead.","Group changes only kick in after the user logs off and back on. Always tell them."],
- "kevin.tran":["Clients, clients, clients. Busy day."],
- "dana.brooks":["Sales life. Always on the phone."],
- "luis.ortega":["Heard I might be moving to Ops soon."],
- "greg.walsh":["Hey. Quiet day, huh?"],
- "tom.reyes":["If you ever need to give someone my exact access, right-click my account in AD and pick Copy."],
- "robert.kim":["Quarter-end. Keep my account locked down, okay?"],
- "janet.moore":["HR rule: no onboarding form, no account. We always send one."],
- "angela.ruiz":["Benefits enrollment season. Don't get me started."],
- "carla.diaz":["I sponsor our contractors. Extensions go through me."],
- "marcus.hill":["Dispatch never sleeps."],
- "sam.patel":["Contractor life. Badge, laptop, repeat."]};
+ "mike.troy":["There's no place like 127.0.0.1.","A ticket without a good note is just a rumor.","\"It works on my machine\" is not a resolution code.","Coffee's on me if you catch a phish today.","The best help desk techs don't know everything. They know how to find out."],
+ "rick.alvarez":["Stuck? Open the account's Properties first. The Account tab tells you a lot: lockout, expiration, password options.","I have a joke about UDP, but you might not get it.","Pro tip: turn on View > Advanced Features in AD. You get an Attribute Editor tab with badPwdCount and pwdLastSet.","There are 10 kinds of people: those who understand binary and those who don't.","\"Same access as so-and-so\"? Right-click their account and choose Copy. It brings the groups along.","Group changes only kick in after the user logs off and back on. Always tell them."],
+ "kevin.tran":["My password is my dog's name. Kidding! ...Mostly.","I closed three deals before breakfast. Okay, one. Okay, I scheduled a call.","If you hear the gong, someone hit quota. Or I dropped my coffee on it again."],
+ "dana.brooks":["Every \"quick call\" is 45 minutes. Every single one.","I have 112 browser tabs open and I'm scared to close any of them.","Reply-all is a lifestyle. A bad one."],
+ "luis.ortega":["Rumor has it Operations has better snacks. Just saying.","I run on cold brew and optimism. Mostly cold brew.","My plants are doing better than my sales numbers. Don't tell Kevin."],
+ "greg.walsh":["Eight years here. I've outlived four printers.","Hey. Quiet day, huh?","Fun fact: the printer jams more on Mondays. I have data."],
+ "tom.reyes":["Debits on the left, credits on the right, coffee in the middle.","Spreadsheets don't lie. The people who build them do.","If you ever need someone with my exact access, right-click my account in AD and pick Copy."],
+ "robert.kim":["Every dollar has a story. Most of them are sad.","Quarter-end. Keep my account locked down, okay?","I'd never ask for a password reset over the phone. If someone \"calls as me,\" it's not me."],
+ "janet.moore":["My favorite word? \"Documented.\" Second favorite: \"Approved.\"","HR rule: no onboarding form, no account. We always send one.","I've read every policy in that binder. Twice. For fun."],
+ "angela.ruiz":["Benefits enrollment season. Pray for me.","The best day of the year? When open enrollment closes.","Someone keeps stealing my yogurt. I will find them."],
+ "carla.diaz":["Trucks don't wait, and neither do I.","A late shipment is just a very expensive surprise.","I sponsor our contractors. Extensions go through me."],
+ "marcus.hill":["Dispatch never sleeps. Neither do I, apparently.","Forty trucks, one radio, zero patience.","Employee of the Month three times running. It's the mustache. I don't have a mustache."],
+ "sam.patel":["Contractor life: new badge, new laptop, same coffee.","My contract says \"through December.\" My badge has its own opinion.","I've worked at six companies. This one has the best dog."]};
 let TILES,OBJS;
 function zoneAt(x,y){if(y<6)return x<=10?"it":x<=20?"sales":"fin";if(y<10)return"hall";return x<=9?"hr":x<=19?"break":"ops"}
 function buildWorld(){
   TILES=[];for(let y=0;y<MH;y++){const row=[];for(let x=0;x<MW;x++){let t="f";if(x===0||x===MW-1||y===0||y===MH-1||y===6||y===10)t="w";if(y<6&&(x===11||x===21))t="w";if(y>10&&(x===10||x===20))t="w";row.push(t)}TILES.push(row)}
-  [[6,6],[16,6],[25,6],[5,10],[14,10],[15,10],[24,10]].forEach(([x,y])=>TILES[y][x]="d");
+  [[6,6],[16,6],[25,6],[5,10],[14,10],[15,10],[24,10]].forEach(([x,y])=>TILES[y][x]="d");TILES[9][0]="e";
   OBJS={};const put=(x,y,type,extra)=>{OBJS[x+","+y]=Object.assign({type},extra||{})};
   for(const[label,[x,y]]of Object.entries(DESKS)){put(x,y,label==="PC"?"pc":"desk",{label});put(x,y+1,"chair",{label})}
   put(4,2,"phone");[[7,1],[8,1],[9,1]].forEach(([x,y])=>put(x,y,"rack"));
@@ -776,6 +790,7 @@ function buildWorld(){
   put(9,11,"shelf");put(1,16,"plant");
   put(11,11,"counter");put(12,11,"counter");put(13,11,"counter");put(17,11,"vending");put(19,11,"cooler");put(15,14,"table");put(16,14,"table");
   put(28,16,"plant");put(21,11,"shelf");
+  delete OBJS["13,11"];addOfficeItems();
 }
 
 /* =========================================================
@@ -787,18 +802,22 @@ function T(id){return S.tickets.find(t=>t.id===id)}
 function npcName(id){const u=S.ad&&S.ad.users[id];return u?u.name:(NAMES[id]||id)}
 function bestScore(){try{return Number(localStorage.getItem("ticketrush-best")||0)}catch(e){return 0}}
 function saveBest(v){try{if(v>bestScore())localStorage.setItem("ticketrush-best",String(v))}catch(e){}}
-function newGame(diff){
+function newGame(diff,opts){opts=opts||{};
   diff=DIFF[diff]?diff:"beginner";const waves=DIFF[diff].waves;
   S={screen:"game",diff,wave:-1,waveDone:false,t:0,ad:initAD(),paused:false,dlg:null,modal:null,
     pc:{open:false,app:null,path:"Ridgeline/Users",selKey:null,collapsed:new Set(),dlgs:[],menu:null,mbar:null,adv:false,ffSel:null,ffView:"list",ffFilter:"active",ffClose:null},
     npc:{},tickets:TICKETS.map(tk=>Object.assign({},tk,{arrive:waves?Infinity:tk.arrive,status:"waiting",flags:{},transcript:[],contacted:false,atDesk:false,badQs:0,asked:{},result:null,notes:shuffle(tk.notes)}))};
   for(const n of NPCS){const[x,y]=DESKS[n.desk];S.npc[n.id]={x,y:y+1,dir:3,walkup:false,hidden:false,line:0}}
   Object.assign(P,{x:3,y:3,dir:3,moving:false,fx:3,fy:3,t:0});
-  buildWorld();buildMapCanvas();
+  buildWorld();buildMapCanvas();dogInit();
   document.getElementById("screen").hidden=true;document.getElementById("game").hidden=false;
   arrive();renderUI();resize();
-  S.tut=null;S.tutFlags={};S.npc["rick.alvarez"].met=true;
-  if(waves)say("Rick Alvarez","Welcome to Ridgeline! I'm Rick, the Tier 2 admin. Today the tickets come in waves. Clear a wave, catch your breath, then start the next one when you're ready.",()=>choose("Rick Alvarez","First day? I can give you a quick tour of how everything works.",[{label:"Yes, show me around (recommended)",fn:()=>startTut()},{label:"No thanks, I know the basics",fn:()=>say("Rick Alvarez","Okay! Your computer is the desk with the bright monitor, and your phone is right next to it. Help and Settings are at the top if you need them.",()=>startWave(0))}]));
+  S.tut=null;S.tutFlags={};S.npc["rick.alvarez"].met=true;S.npc["mike.troy"].met=true;
+  if(opts.load)return;
+  startIntro(()=>afterIntro(waves));
+}
+function afterIntro(waves){
+  if(waves)say("Rick Alvarez",(S.introSeen?"Glad you survived Mike's tour! Quick heads-up:":"Welcome to Ridgeline! I'm Rick, the Tier 2 admin.")+" Today the tickets come in waves. Clear a wave, catch your breath, then start the next one when you're ready.",()=>choose("Rick Alvarez","First day? I can give you a quick tour of how everything works.",[{label:"Yes, show me around (recommended)",fn:()=>startTut()},{label:"No thanks, I know the basics",fn:()=>say("Rick Alvarez","Okay! Your computer is the desk with the bright monitor, and your phone is right next to it. Help and Settings are at the top if you need them.",()=>startWave(0))}]));
   else say("Rick Alvarez","Expert shift. Tickets arrive on their own schedule, the clock runs fast, and there are no KB articles. Good luck.");
 }
 function showBanner(big,sub,chips,kind){
@@ -828,7 +847,7 @@ const sfx={ring(){for(let i=0;i<4;i++){tone(1180,.07,"square",.035,i*.14);tone(9
    GAME LOGIC
    ========================================================= */
 let uiDirty=false;
-function running(){return S.screen==="game"&&!(S.bannerUntil&&performance.now()<S.bannerUntil)&&!S.paused&&!S.dlg&&!S.modal&&S.tut==null&&!(DIFF[S.diff].waves&&(S.waveDone||S.wave<0))}
+function running(){return S.screen==="game"&&!S.cut&&!(S.bannerUntil&&performance.now()<S.bannerUntil)&&!S.paused&&!S.dlg&&!S.modal&&S.tut==null&&!(DIFF[S.diff].waves&&(S.waveDone||S.wave<0))}
 function spend(min){S.t+=min;tick()}
 function tick(){
   const m=S.ad.users["marcus.hill"],tk=T(1002);
@@ -865,7 +884,7 @@ function sendHome(id){const n=NPCS.find(x=>x.id===id);if(!n)return;const[x,y]=DE
 function endShift(){
   S.screen="end";S.modal=null;S.dlg=null;S.pc.open=false;
   for(const tk of S.tickets)if(tk.status==="open"||tk.status==="waiting")tk.result={total:0,lines:["Not resolved before the end of the shift."],missed:true};
-  saveBest(totalScore());renderUI();
+  saveBest(totalScore());clearSave();renderUI();
 }
 function totalScore(){return S.tickets.reduce((a,t)=>a+(t.result?t.result.total:0),0)}
 function counted(){return S.tickets.filter(t=>t.status!=="skipped")}
@@ -898,7 +917,7 @@ function grade(id,outcome,noteIdx){
   const total=Math.max(-50,Math.min(100,r.fix+r.sec+noteP+spd));
   tk.result={fix:r.fix,sec:r.sec,note:noteP,spd,total,lines:r.lines,outcome};
   tk.status="done";if(tk.via==="walk-up")sendHome(tk.npc);
-  S.modal={type:"result",id};total>=70?sfx.ok():total<40?sfx.err():sfx.blip();
+  saveGame();S.modal={type:"result",id};total>=70?sfx.ok():total<40?sfx.err():sfx.blip();
 }
 
 /* =========================================================
@@ -1338,7 +1357,7 @@ function drawFloor(c,x,y,z){const[a,b]=ZC[z];const px=x*TS,py=y*TS;R(c,a,px,py,T
   else if(z==="break"){if((x+y)%2)R(c,b,px,py,16,16)}
   else{for(let i=0;i<4;i++)R(c,b,px+((i*5+y*3)%14)+1,py+((i*7+x*5)%14)+1,1,1)}}
 function drawWall(c,x,y){const px=x*TS,py=y*TS;R(c,"#55687a",px,py,16,16);R(c,"#6f8597",px,py,16,4);R(c,"#3f4f5d",px,py+13,16,3);R(c,"#4a5c6c",px+((x*7)%12),py+6,3,1)}
-function drawObj(c,o,x,y,t){const px=x*TS,py=y*TS;
+function drawObj(c,o,x,y,t){const px=x*TS,py=y*TS;if(o.txt){if(o.type!=="sign")drawDecor(c,o,x,y,t);return}
   switch(o.type){
   case"desk":case"pc":R(c,"#7a5530",px+1,py+12,14,3);R(c,"#a87a48",px+1,py+4,14,9);R(c,"#c08f5a",px+1,py+4,14,1);R(c,"#2b2b2b",px+4,py,8,7);R(c,o.type==="pc"?"#7fd0ff":"#5fa0d8",px+5,py+1,6,4);R(c,"#444",px+7,py+7,2,2);R(c,"#d9d9d9",px+5,py+10,6,2);break;
   case"phone":R(c,"#7a5530",px+1,py+12,14,3);R(c,"#a87a48",px+1,py+4,14,9);R(c,"#c08f5a",px+1,py+4,14,1);R(c,"#222",px+4,py+7,8,5);R(c,"#b8352e",px+3,py+5,10,3);R(c,"#666",px+5,py+9,1,1);R(c,"#666",px+7,py+9,1,1);R(c,"#666",px+9,py+9,1,1);break;
@@ -1354,7 +1373,8 @@ function drawObj(c,o,x,y,t){const px=x*TS,py=y*TS;
   }}
 function buildMapCanvas(){
   mapCanvas=document.createElement("canvas");mapCanvas.width=MW*TS;mapCanvas.height=MH*TS;const c=mapCanvas.getContext("2d");
-  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const t=TILES[y][x];if(t==="w")drawWall(c,x,y);else{drawFloor(c,x,y,t==="d"?"hall":zoneAt(x,y));if(t==="d"){R(c,"#7a4f2f",x*TS+2,y*TS+3,12,10);R(c,"#93603a",x*TS+3,y*TS+4,10,8)}}}
+  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const t=TILES[y][x];if(t==="w"||t==="e")drawWall(c,x,y);else{drawFloor(c,x,y,t==="d"?"hall":zoneAt(x,y));if(t==="d"){R(c,"#7a4f2f",x*TS+2,y*TS+3,12,10);R(c,"#93603a",x*TS+3,y*TS+4,10,8)}}}
+  drawBigSign(c);drawEntrance(c);
   c.font="8px Silkscreen, monospace";c.textBaseline="top";
   const lab=(txt,x,y,col)=>{c.fillStyle="rgba(0,0,0,.25)";c.fillText(txt,x*TS+1,y*TS+1);c.fillStyle=col||"rgba(255,255,255,.75)";c.fillText(txt,x*TS,y*TS)};
   lab("IT",1.2,1.1);lab("SALES",14.3,1.1);lab("FINANCE",22.2,0.6);lab("HR",1.2,11.1);lab("BREAK ROOM",14.2,12.2,"rgba(60,50,40,.6)");lab("OPERATIONS",22.2,10.6);lab("HALLWAY",4.2,8.2,"rgba(60,50,40,.55)");
@@ -1384,7 +1404,7 @@ function resize(){
   const maxH=Math.max(TS*SCALE*7,Math.min(avail,window.innerHeight*(padOn?0.62:0.9)));VH=Math.min(MH,Math.max(7,Math.floor(maxH/(TS*SCALE))));
   cv.width=Math.round(w*DPR);cv.height=Math.round(VH*TS*SCALE*DPR);cv.style.height=(VH*TS*SCALE)+"px";st.style.setProperty("--stageH",(VH*TS*SCALE)+"px");
 }
-function solidAt(x,y){if(x<0||y<0||x>=MW||y>=MH)return true;if(TILES[y][x]==="w")return true;const o=OBJS[x+","+y];if(o&&o.type!=="chair")return true;
+function solidAt(x,y){if(x<0||y<0||x>=MW||y>=MH)return true;if(TILES[y][x]==="w"||TILES[y][x]==="e")return true;const o=OBJS[x+","+y];if(o&&o.type!=="chair")return true;
   for(const id in S.npc){const n=S.npc[id];if(!n.hidden&&n.x===x&&n.y===y)return true}return false}
 function npcAt(x,y){for(const id in S.npc){const n=S.npc[id];if(!n.hidden&&n.x===x&&n.y===y)return id}return null}
 const DIRV=[[0,1],[-1,0],[1,0],[0,-1]];
@@ -1404,7 +1424,8 @@ function draw(t){
   const ringing=S.tickets.some(tk=>tk.status==="open"&&tk.via==="phone"&&!tk.contacted);
   if(ringing){const sh=Math.floor(t/90)%2;R(ctx,"#b8352e",4*TS+3+sh,2*TS+4,10,3);bubble(ctx,4*TS,2*TS+2,t,"!")}
   const ents=[];
-  for(const n of NPCS){const st=S.npc[n.id];if(st.hidden)continue;if(n.id==="priya.shah"&&false)continue;ents.push({y:st.y,draw:()=>{drawChar(ctx,st.x*TS,st.y*TS-3,st.dir,0,n.pal);const b=npcBubble(n.id);if(b)bubble(ctx,st.x*TS,st.y*TS-3,t,b)}})}
+  for(const n of NPCS){const st=S.npc[n.id];if(st.hidden)continue;const nx=st.moving?st.fx+(st.x-st.fx)*st.mt:st.x,ny=st.moving?st.fy+(st.y-st.fy)*st.mt:st.y;const fr=st.moving?((Math.floor(t/120)%2)?1:2):0;ents.push({y:ny,draw:()=>{drawChar(ctx,nx*TS,ny*TS-3,st.dir,fr,n.pal);const b=S.cut?null:npcBubble(n.id);if(b)bubble(ctx,nx*TS,ny*TS-3,t,b)}})}
+  if(S.dog)ents.push({y:S.dog.y-0.1,draw:()=>drawDog(ctx,t)});
   const frame=P.moving?(P.step%2?1:2):0;
   ents.push({y:py,draw:()=>drawChar(ctx,px*TS,py*TS-3,P.dir,frame,PLAYER_PAL)});
   ents.sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
@@ -1584,7 +1605,7 @@ function renderSettings(){return`<div class="modal"><div class="win" role="dialo
  <p style="margin-top:0">Difficulty (you can change this any time):</p>
  <div class="diffs">${Object.entries(DIFF).map(([k,d])=>`<button class="diff ${S.diff===k?"rec":""}" data-a="setdiff" data-diff="${k}"><span class="dn">${d.label}${S.diff===k?' <span class="tag">Current</span>':""}</span><span class="dd">${d.desc}</span></button>`).join("")}</div>
  <button class="btn" data-a="mute">${muted?"Sound: off":"Sound: on"}</button><button class="btn" data-a="help">Help guide</button><button class="btn" data-a="tut-start">Replay the tour</button>
- <div><button class="btn primary" data-a="mclose">Back to the game</button><button class="btn" data-a="title">Quit to title</button></div></div></div></div>`}
+ <div><button class="btn primary" data-a="mclose">Back to the game</button><button class="btn" data-a="savequit">Save &amp; quit to title</button></div></div></div></div>`}
 /* ---------- Notepad ---------- */
 const NP={el:null,ta:null};
 function npInit(){
@@ -1600,11 +1621,172 @@ function npToggle(show){const on=show==null?NP.el.hidden:show;NP.el.hidden=!on;i
 function npStamp(){const t="["+fmt(S.t||0)+"] ";const ta=NP.ta,p=ta.selectionStart||ta.value.length;ta.value=ta.value.slice(0,p)+(p&&ta.value[p-1]!=="\n"?"\n":"")+t+ta.value.slice(p);ta.focus();try{localStorage.setItem("ticketrush-notes",ta.value)}catch(e){}}
 
 /* =========================================================
+   v6: intro cutscene, office personality, office dog, save/load
+   ========================================================= */
+const OFFICE_ITEMS=[
+ // wall-mounted (on wall tiles, look at them from the floor)
+ [5,0,"whiteboard",["The whiteboard says: \"Days since someone clicked a phishing link: 0\". Someone erased the 1.","Under that, in tiny letters: \"It was Kevin.\""]],
+ [2,0,"poster",["A poster: \"Have you tried turning it off and on again?\" Somebody added: \"Then call IT.\""]],
+ [15,0,"board",["Sales leaderboard: 1st place, Kevin Tran. (Kevin wrote this board.)","Someone drew a tiny crown next to Dana's name. Kevin hasn't noticed yet."]],
+ [24,0,"chart",["A pie chart titled \"Where the budget goes\". Ninety percent of the pie is labeled \"Coffee\"."]],
+ [20,6,"clock",["The office clock is 4 minutes fast. Nobody knows who set it. Nobody dares fix it."]],
+ [11,6,"sign",["RIDGELINE LOGISTICS. Moving freight since 1987. \"If it's on a truck, it's on our network.\""]],
+ [8,10,"eotm",["Employee of the Month: Marcus Hill. Again. He's undefeated.","Next month's nominee box has one slip in it. It just says \"Byte\" with a paw print."]],
+ [22,10,"safety",["Operations safety board: 412 days without a forklift incident. The 4 looks freshly repainted."]],
+ [26,10,"routemap",["A giant route map with pins all over the East Coast. Red string connects the warehouses like a detective show."]],
+ // floor objects
+ [20,1,"gong",["A big brass gong. A sticky note says: \"Ring ONLY for closed deals. Not for lunch. Kevin.\""]],
+ [28,4,"safe",["A small safe. The keypad has fingerprints on 1, 9, 8 and 7. Hmm, the year Ridgeline was founded. Classic weak combo."]],
+ [8,14,"cabinet",["Filing cabinet labeled CONFIDENTIAL. It's locked, which is exactly what HR wants you to see."]],
+ [13,11,"coffee",["The coffee machine gurgles. You get a cup. Your productivity just went up 10%.","The coffee machine displays: ERROR 418. I'm a teapot. Someone's been messing with it."]],
+ [18,11,"fridge",["A note on the fridge: \"LABEL YOUR FOOD. This means you, whoever keeps taking my yogurt. -Angela\""]],
+ [11,15,"arcade",["An old arcade cabinet called PACKET PANIC. High score: RICK, 99,999. Of course it is."]],
+ [19,15,"couch",["A worn-out break room couch. It has seen more power naps than a kindergarten."]],
+ [28,13,"pallets",["A stack of shipping pallets. One is labeled \"Do not stack\". It's at the bottom."]],
+ [19,7,"tank",["The office fish tank. The fish are named Ping, Packet, and Latency. Latency is always last to the food."]],
+ [2,7,"bench",["A lobby bench. A visitor badge someone forgot is sitting on it. That's a security incident waiting to happen."]],
+];
+const LOOK_HINT={whiteboard:"Read whiteboard",poster:"Read poster",board:"Read leaderboard",chart:"Look at chart",clock:"Check clock",sign:"Read sign",eotm:"Employee of the Month",safety:"Safety board",routemap:"Route map",gong:"Look at gong",safe:"Inspect safe",cabinet:"Filing cabinet",coffee:"Grab coffee",fridge:"Read fridge note",arcade:"Play arcade",couch:"Sit on couch",pallets:"Look at pallets",tank:"Fish tank",bench:"Lobby bench"};
+function addOfficeItems(){for(const[x,y,type,txt]of OFFICE_ITEMS)OBJS[x+","+y]={type,txt,i:0}}
+function drawDecor(c,o,x,y,t){const px=x*TS,py=y*TS;
+  switch(o.type){
+  case"whiteboard":R(c,"#e8e8e8",px+1,py+2,14,10);R(c,"#999",px+1,py+12,14,1);R(c,"#2b6cb0",px+3,py+4,6,1);R(c,"#c0392b",px+3,py+6,9,1);R(c,"#2b6cb0",px+3,py+8,4,1);R(c,"#333",px+11,py+7,2,2);break;
+  case"poster":R(c,"#f2d45c",px+3,py+2,10,11);R(c,"#1a1612",px+5,py+4,6,4);R(c,"#7fd0ff",px+6,py+5,4,2);R(c,"#1a1612",px+5,py+10,6,1);break;
+  case"board":R(c,"#1f5c3a",px+1,py+2,14,10);R(c,"#8a6a45",px+1,py+12,14,1);R(c,"#f2d45c",px+3,py+4,3,1);R(c,"#fff",px+7,py+4,6,1);R(c,"#ddd",px+3,py+7,9,1);R(c,"#ddd",px+3,py+9,7,1);break;
+  case"chart":R(c,"#fff",px+2,py+2,12,11);c.fillStyle="#c0392b";c.beginPath();c.arc(px+8,py+7,4,0,Math.PI*1.8);c.lineTo(px+8,py+7);c.fill();R(c,"#2b6cb0",px+8,py+3,2,2);break;
+  case"clock":c.fillStyle="#fff";c.beginPath();c.arc(px+8,py+7,5,0,Math.PI*2);c.fill();R(c,"#1a1612",px+8,py+3,1,4);R(c,"#1a1612",px+8,py+7,3,1);c.strokeStyle="#1a1612";c.lineWidth=1;c.beginPath();c.arc(px+8,py+7,5,0,Math.PI*2);c.stroke();break;
+  case"eotm":R(c,"#8a6a45",px+2,py+2,12,11);R(c,"#f5efd9",px+3,py+3,10,9);R(c,"#6e452e",px+6,py+5,4,3);R(c,"#e0a43a",px+5,py+8,6,3);R(c,"#f2d45c",px+11,py+3,2,2);break;
+  case"safety":R(c,"#f2c200",px+1,py+2,14,10);R(c,"#1a1612",px+3,py+4,10,6);R(c,"#39e65a",px+4,py+5,2,4);R(c,"#39e65a",px+7,py+5,2,4);R(c,"#39e65a",px+10,py+5,2,4);break;
+  case"routemap":R(c,"#cfe3d0",px,py+2,16,11);R(c,"#7fb3e0",px,py+2,4,11);R(c,"#c0392b",px+6,py+4,1,1);R(c,"#c0392b",px+10,py+8,1,1);R(c,"#c0392b",px+13,py+5,1,1);R(c,"#c0392b",px+7,py+5,4,1);R(c,"#c0392b",px+10,py+6,1,2);break;
+  case"gong":R(c,"#5a3d22",px+2,py+2,1,13);R(c,"#5a3d22",px+13,py+2,1,13);R(c,"#5a3d22",px+2,py+2,12,1);c.fillStyle="#d9a53a";c.beginPath();c.arc(px+8,py+8,4,0,Math.PI*2);c.fill();R(c,"#f2d45c",px+7,py+6,2,2);break;
+  case"safe":R(c,"#4a4f57",px+2,py+3,12,12);R(c,"#6b7280",px+3,py+4,10,10);c.fillStyle="#cfcfcf";c.beginPath();c.arc(px+8,py+9,2.5,0,Math.PI*2);c.fill();R(c,"#222",px+12,py+7,1,4);break;
+  case"cabinet":R(c,"#7d8590",px+3,py+1,10,14);R(c,"#a3abb5",px+4,py+2,8,3);R(c,"#a3abb5",px+4,py+6,8,3);R(c,"#a3abb5",px+4,py+10,8,3);R(c,"#333",px+7,py+3,2,1);R(c,"#333",px+7,py+7,2,1);R(c,"#333",px+7,py+11,2,1);R(c,"#c0392b",px+10,py+2,2,1);break;
+  case"coffee":R(c,"#8f98a0",px,py+2,16,13);R(c,"#c9d0d6",px,py+2,16,3);R(c,"#2a2a35",px+4,py,8,10);R(c,"#c0392b",px+5,py+2,2,1);R(c,"#39e65a",px+8,py+2,2,1);R(c,"#fff",px+6,py+6,4,3);if(Math.floor(t/500)%2)R(c,"rgba(255,255,255,.6)",px+7,py+3,1,2);break;
+  case"fridge":R(c,"#e8ecef",px+2,py,12,15);R(c,"#b9c1c8",px+2,py+6,12,1);R(c,"#888",px+11,py+2,1,3);R(c,"#888",px+11,py+8,1,4);R(c,"#f2d45c",px+4,py+8,3,3);break;
+  case"arcade":R(c,"#3b2a6b",px+2,py,12,15);R(c,"#111",px+4,py+2,8,6);R(c,"#39e65a",px+5,py+3+(Math.floor(t/300)%3),2,2);R(c,"#f2d45c",px+9,py+4,2,2);R(c,"#c0392b",px+5,py+10,2,2);R(c,"#2b6cb0",px+9,py+10,2,2);break;
+  case"couch":R(c,"#7a3b3b",px,py+4,16,10);R(c,"#9a4b4b",px+2,py+6,12,5);R(c,"#5a2a2a",px,py+13,16,2);break;
+  case"pallets":R(c,"#b58a52",px+1,py+3,14,3);R(c,"#8a6a3a",px+1,py+6,14,1);R(c,"#b58a52",px+1,py+7,14,3);R(c,"#8a6a3a",px+1,py+10,14,1);R(c,"#b58a52",px+1,py+11,14,3);break;
+  case"tank":R(c,"#3a3d46",px+1,py+12,14,3);R(c,"#5fb0e8",px+1,py+3,14,9);R(c,"#8fd0ff",px+1,py+3,14,2);{const fx=(Math.floor(t/120)%10);R(c,"#f2a33a",px+2+fx,py+7,3,2);R(c,"#e85a5a",px+12-((fx+4)%9),py+9,2,1)}R(c,"#2f7a34",px+3,py+9,1,3);R(c,"#2f7a34",px+12,py+8,1,4);break;
+  case"bench":R(c,"#7a5530",px+1,py+7,14,3);R(c,"#5a3d22",px+2,py+10,2,4);R(c,"#5a3d22",px+12,py+10,2,4);R(c,"#fff",px+9,py+6,3,2);break;
+  }}
+function drawBigSign(c){const x=8*TS,y=6*TS;R(c,"#1a1612",x+2,y+2,7*TS-4,12);R(c,"#27457d",x+3,y+3,7*TS-6,10);c.font="7px Silkscreen, monospace";c.textBaseline="top";c.fillStyle="#000";c.fillText("RIDGELINE LOGISTICS",x+9,y+5);c.fillStyle="#f2d45c";c.fillText("RIDGELINE LOGISTICS",x+8,y+4);
+  R(c,"#f2d45c",x+7*TS-14,y+5,7,4);R(c,"#f2d45c",x+7*TS-8,y+7,3,2);R(c,"#1a1612",x+7*TS-13,y+9,2,2);R(c,"#1a1612",x+7*TS-8,y+9,2,2)}
+function drawEntrance(c){R(c,"#55687a",0,9*TS,TS,TS);R(c,"#9fd4f0",2,9*TS+1,12,14);R(c,"#d9f0ff",3,9*TS+2,3,12);R(c,"#555",10,9*TS+7,2,2);
+  R(c,"#7a2e2e",TS+1,9*TS+2,14,12);R(c,"#933a3a",TS+2,9*TS+3,12,10);c.font="4px Silkscreen, monospace";c.fillStyle="#f2d45c";c.fillText("WELCOME",TS+2,9*TS+6);
+  R(c,"#2f7a34",3,8*TS+5,10,3);c.font="4px Silkscreen, monospace";c.fillStyle="#fff";c.fillText("EXIT",4,8*TS+5)}
+/* ---------- Office dog ---------- */
+function dogInit(){S.dog={x:22,y:9,dir:1,fx:22,fy:9,mt:1,next:0}}
+function dogUpdate(dt,now){const d=S.dog;if(!d)return;if(d.mt<1){d.mt=Math.min(1,d.mt+dt/260);return}
+  if(now<d.next||S.cut)return;d.next=now+700+Math.random()*1600;
+  const dirs=[[0,1],[-1,0],[1,0],[0,-1]];const k=Math.floor(Math.random()*4);const nx=d.x+dirs[k][0],ny=d.y+dirs[k][1];
+  if(ny<7||ny>9||nx<3||nx>27||solidAt(nx,ny)||(P.x===nx&&P.y===ny))return;d.fx=d.x;d.fy=d.y;d.x=nx;d.y=ny;d.dir=k;d.mt=0}
+function drawDog(c,t){const d=S.dog;if(!d)return;const x=(d.fx+(d.x-d.fx)*d.mt)*TS,y=(d.fy+(d.y-d.fy)*d.mt)*TS;const px=Math.round(x),py=Math.round(y);const flip=d.dir===1;
+  R(c,"rgba(0,0,0,.25)",px+3,py+13,10,2);R(c,"#c98a4a",px+4,py+8,8,4);R(c,"#c98a4a",flip?px+2:px+10,py+5,4,4);R(c,"#7a4a22",flip?px+2:px+12,py+4,2,2);R(c,"#1a1a1a",flip?px+3:px+12,py+6,1,1);
+  R(c,"#c98a4a",px+5,py+12,1,2);R(c,"#c98a4a",px+10,py+12,1,2);const wag=Math.floor(t/150)%2;R(c,"#c98a4a",flip?px+12:px+3,py+7-wag,1,3);R(c,"#c0392b",flip?px+5:px+9,py+8,2,1)}
+const DOG_LINES=["Byte wags his tail. He's the office dog and, honestly, the real head of physical security.","Byte sniffs your badge... and approves. Access granted.","Byte drops a chewed-up ethernet cable at your feet. So that's where the spare went.","Byte rolls over. Nobody can resist a belly rub. Not even IT."];
+function dogAt(x,y){return S.dog&&S.dog.x===x&&S.dog.y===y}
+/* ---------- Intro cutscene ---------- */
+function introScript(){
+  const M="Mike Troy";
+  return[
+   {t:"card",title:"RIDGELINE LOGISTICS",sub:"Monday, 8:52 AM. Your first day as a Tier 1 help desk tech.",ms:3200},
+   {t:"say",spk:M,text:"There you are! You must be our new Tier 1 tech. I'm Mike Troy, Service Desk Manager. Welcome to Ridgeline Logistics!"},
+   {t:"say",spk:M,text:"We move freight up and down the East Coast. Trucks, warehouses, the works. And when a computer stops, the trucks stop. That's where we come in."},
+   {t:"say",spk:M,text:"Let me give you the grand tour. Follow me."},
+   {t:"walk",path:[[3,9],[3,8],[4,8],[5,8]]},{t:"face",dir:0},
+   {t:"say",spk:M,text:"Down there is HR. Janet runs onboarding. Golden rule: if it's not on an HR form, it didn't happen."},
+   {t:"walk",path:[[6,8],[7,8],[8,8],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8]]},{t:"face",dir:0},
+   {t:"say",spk:M,text:"The break room. Free coffee, a questionable microwave, and an arcade machine Rick refuses to let anyone beat."},
+   {t:"walk",path:[[15,8],[16,8]]},{t:"face",dir:3},
+   {t:"say",spk:M,text:"Up there is Sales. Kevin's crew. Fast talkers, and they forget their passwords even faster."},
+   {t:"walk",path:[[17,8],[18,8],[19,8],[20,8],[21,8],[22,8],[23,8],[24,8]]},{t:"face",dir:3},
+   {t:"say",spk:M,text:"Finance is up top. The corner desk belongs to our CFO, Robert Kim. And down there is Operations. Carla's team keeps the trucks rolling."},
+   {t:"say",spk:M,text:"Oh, and that furry guy in the hallway is Byte, our office dog. He outranks both of us."},
+   {t:"walk",path:[[23,8],[22,8],[21,8],[20,8],[19,8],[18,8],[17,8],[16,8],[15,8],[14,8],[13,8],[12,8],[11,8],[10,8],[9,8],[8,8],[7,8],[6,8],[6,7],[6,6],[6,5],[6,4],[5,4],[5,3]]},{t:"face",dir:0},
+   {t:"say",spk:M,text:"And this is home: the IT room. Those blinking boxes are our servers. Admire them, don't touch them."},
+   {t:"fn",f:()=>{S.npc["rick.alvarez"].dir=1}},
+   {t:"say",spk:"Rick Alvarez",text:"Hey, welcome! I'm Rick, Tier 2. Holler if you get stuck. And no, you can't beat my arcade score."},
+   {t:"say",spk:M,text:"That desk with the bright monitor is yours, and the phone's right next to it. Tickets come in through FixFlow, and you'll manage accounts in Active Directory."},
+   {t:"say",spk:M,text:"Three rules: verify before you reset, no HR form means no account, and if something feels off, call Security. You'll do great."},
+   {t:"card",title:"Let's get to work.",sub:"",ms:1600,at:()=>{placeAfterIntro()}}
+  ];
+}
+function placeAfterIntro(){
+  const m=S.npc["mike.troy"],[mx,my]=DESKS["IT-1"];Object.assign(m,{x:mx,y:my+1,dir:3,moving:false});
+  S.npc["rick.alvarez"].dir=3;Object.assign(P,{x:3,y:3,dir:3,moving:false,fx:3,fy:3,t:0});
+}
+function startIntro(done){
+  const m=S.npc["mike.troy"];Object.assign(m,{x:2,y:9,dir:1,moving:false,fx:2,fy:9,mt:1});
+  Object.assign(P,{x:1,y:9,dir:2,moving:false,fx:1,fy:9,t:0});
+  S.cut={q:introScript(),i:0,started:false,done};
+  document.getElementById("skipintro").hidden=false;uiDirty=true;
+}
+function endCut(finished){
+  if(!S.cut)return;const done=S.cut.done;S.cut=null;S.dlg=null;placeAfterIntro();S.introSeen=!!finished;if(!finished)S.npc["mike.troy"].met=false;
+  const cc=document.getElementById("cutcard");cc.hidden=true;cc.className="";document.getElementById("skipintro").hidden=true;uiDirty=true;if(done)done();
+}
+function cutNext(){S.cut.i++;S.cut.started=false}
+function cutUpdate(dt,now){
+  const c=S.cut;if(!c)return;const a=c.q[c.i];if(!a){endCut(true);return}
+  const m=S.npc["mike.troy"];
+  if(m.moving){m.mt+=dt/190;if(m.mt>=1){m.moving=false;m.mt=1}}
+  if(a.t==="say"){if(!c.started){c.started=true;say(a.spk,a.text,cutNext)}return}
+  if(a.t==="face"){m.dir=a.dir;if(a.who==="p")P.dir=a.dir;cutNext();return}
+  if(a.t==="fn"){a.f();cutNext();return}
+  if(a.t==="card"){const cc=document.getElementById("cutcard");
+    if(!c.started){c.started=true;c.end=now+a.ms;cc.innerHTML=`<div class="cc-in"><div class="cc-t">${esc(a.title)}</div>${a.sub?`<div class="cc-s">${esc(a.sub)}</div>`:""}</div>`;cc.className="show";cc.hidden=false;if(a.at)a.at();tone(330,.12,"triangle",.05);tone(494,.2,"triangle",.05,.15)}
+    if(now>=c.end){cc.className="fade";setTimeout(()=>{if(!S.cut||S.cut.q[S.cut.i]!==a){}cc.hidden=true;cc.className=""},500);cutNext()}return}
+  if(a.t==="walk"){
+    if(!c.started){c.started=true;c.step=0}
+    if(m.moving||P.moving)return;
+    if(c.step>=a.path.length){cutNext();return}
+    const[nx,ny]=a.path[c.step++];const ox=m.x,oy=m.y;
+    const dirOf=(dx,dy)=>dx>0?2:dx<0?1:dy>0?0:3;
+    m.dir=dirOf(nx-ox,ny-oy);Object.assign(m,{fx:ox,fy:oy,x:nx,y:ny,mt:0,moving:true});
+    const pdx=ox-P.x,pdy=oy-P.y;if(pdx||pdy){P.dir=dirOf(pdx,pdy);P.fx=P.x;P.fy=P.y;P.x=ox;P.y=oy;P.moving=true;P.t=0;P.step++}
+  }
+}
+/* ---------- Save / load ---------- */
+const SAVE_KEY="ticketrush-save-v1";
+function hasSave(){try{return !!localStorage.getItem(SAVE_KEY)}catch(e){return false}}
+function readSave(){try{return JSON.parse(localStorage.getItem(SAVE_KEY)||"null")}catch(e){return null}}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}}
+let lastSave=0;
+function saveGame(){
+  if(!S||S.screen!=="game"||S.cut)return;
+  try{
+    const data={v:1,savedAt:Date.now(),diff:S.diff,wave:S.wave,waveDone:S.waveDone,t:S.t,gossipDone:!!S.gossipDone,introSeen:!!S.introSeen,activeTk:S.activeTk||null,
+      P:{x:P.x,y:P.y,dir:P.dir},ad:S.ad,npc:S.npc,dog:S.dog?{x:S.dog.x,y:S.dog.y}:null,
+      tickets:S.tickets.map(t=>({id:t.id,status:t.status,flags:t.flags,transcript:t.transcript,contacted:t.contacted,atDesk:t.atDesk,badQs:t.badQs,asked:t.asked,result:t.result,
+        notes:t.notes.map(n=>n.t),arrive:isFinite(t.arrive)?t.arrive:null,deadline:t.deadline||null,introduced:!!t.introduced}))};
+    localStorage.setItem(SAVE_KEY,JSON.stringify(data));lastSave=performance.now();
+  }catch(e){}
+}
+function saveSummary(d){if(!d)return"";const done=d.tickets.filter(t=>t.status==="done").length,total=d.tickets.filter(t=>t.status!=="skipped").length;
+  return DIFF[d.diff].label+" · "+(DIFF[d.diff].waves?"Wave "+Math.max(1,d.wave+1)+"/"+WAVES.length+" · ":"")+fmt(d.t)+" · "+done+"/"+total+" tickets closed"}
+function loadGame(){
+  const d=readSave();if(!d||!DIFF[d.diff]){toast("Couldn't load your save.");return}
+  newGame(d.diff,{load:true});
+  Object.assign(S,{wave:d.wave,waveDone:d.waveDone,t:d.t,gossipDone:d.gossipDone,introSeen:true,activeTk:d.activeTk,ad:d.ad});
+  for(const id in S.npc)if(d.npc&&d.npc[id])Object.assign(S.npc[id],d.npc[id],{moving:false});
+  if(d.dog&&S.dog)Object.assign(S.dog,{x:d.dog.x,y:d.dog.y,fx:d.dog.x,fy:d.dog.y,mt:1});
+  for(const s of d.tickets){const tk=T(s.id);if(!tk)continue;const orig=TICKETS.find(x=>x.id===s.id);
+    Object.assign(tk,{status:s.status,flags:s.flags||{},transcript:s.transcript||[],contacted:s.contacted,atDesk:s.atDesk,badQs:s.badQs||0,asked:s.asked||{},result:s.result,introduced:s.introduced,
+      arrive:s.arrive==null?Infinity:s.arrive,deadline:s.deadline||tk.deadline});
+    const restored=(s.notes||[]).map(txt=>orig.notes.find(n=>n.t===txt)).filter(Boolean);if(restored.length===orig.notes.length)tk.notes=restored}
+  Object.assign(P,{x:d.P.x,y:d.P.y,dir:d.P.dir,moving:false,fx:d.P.x,fy:d.P.y,t:0});
+  if(DIFF[S.diff].waves&&S.wave<0)startWave(0);
+  hudMin=-1;uiDirty=true;renderUI();resize();toast("Welcome back! Picking up at "+fmt(S.t)+".");
+}
+window.addEventListener("beforeunload",saveGame);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)saveGame()});
+
+/* =========================================================
    INPUT + LOOP
    ========================================================= */
 const held=[];let lastTs=0,hudMin=-1;
 const KEYDIR={ArrowDown:0,s:0,S:0,ArrowLeft:1,a:1,A:1,ArrowRight:2,d:2,D:2,ArrowUp:3,w:3,W:3};
-function canMove(){return S.screen==="game"&&!S.dlg&&!S.pc.open&&!S.modal&&!S.paused}
+function canMove(){return S.screen==="game"&&!S.cut&&!S.dlg&&!S.pc.open&&!S.modal&&!S.paused}
 function pressDir(d){if(!held.includes(d))held.push(d);if(canMove()&&!P.moving&&P.dir!==d){P.dir=d;P.turnT=110}}
 function releaseDir(d){const i=held.indexOf(d);if(i>=0)held.splice(i,1)}
 function update(dt){
@@ -1619,7 +1801,9 @@ function interact(){
   if(!canMove())return;
   const[fx,fy]=facing();const id=npcAt(fx,fy);
   if(id){S.npc[id].dir=[3,2,1,0][P.dir];talkNPC(id);return}
+  if(dogAt(fx,fy)){say("",DOG_LINES[(S.dogLine=(S.dogLine||0)+1)%DOG_LINES.length]);tone(880,.05);tone(990,.05,"square",.03,.07);return}
   const o=OBJS[fx+","+fy];if(!o){return}
+  if(o.txt){say("","("+o.txt[o.i%o.txt.length]+")");o.i++;return}
   switch(o.type){
    case"pc":openPC();sfx.blip();break;
    case"phone":usePhone();break;
@@ -1637,7 +1821,7 @@ function interact(){
 function faceHint(){
   if(!S.npc||S.screen!=="game")return"";
   const K=matchMedia("(hover:hover) and (pointer:fine)").matches?"Enter":"A";const[fx,fy]=facing();const id=npcAt(fx,fy);if(id)return K+": Talk to "+npcName(id);
-  const o=OBJS[fx+","+fy];if(!o)return"";
+  if(dogAt(fx,fy))return K+": Pet Byte";const o=OBJS[fx+","+fy];if(!o)return"";if(o.txt)return K+": "+(LOOK_HINT[o.type]||"Look");
   return{pc:K+": Use computer",phone:K+": Use phone",desk:"Desk "+o.label,printer:K+": Check printer",rack:"Server rack",cooler:K+": Water cooler",vending:K+": Vending machine"}[o.type]||"";
 }
 function goalHint(){
@@ -1666,6 +1850,7 @@ function loop(ts){
   const dt=Math.min(100,ts-(lastTs||ts));lastTs=ts;
   if(S.screen==="game"){
     if(running()){S.t+=dt/DIFF[S.diff].ms;tick()}
+    cutUpdate(dt,ts);dogUpdate(dt,ts);if(ts-lastSave>4000)saveGame();
     update(dt);draw(ts);hudTick();tutCheck();updateRing();if(S.tutPop&&ts-(S.tutT0||0)>700){S.tutPop=false}
     if(uiDirty){const ae=document.activeElement;const typing=ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&S.pc.open;if(!typing)renderUI()}
   }
@@ -1679,7 +1864,8 @@ function renderTitle(){const best=bestScore();return`<h1 class="logo" style="tex
  <div class="win"><h2><span>Ridgeline Logistics: IT Help Desk</span><span>Day 1</span></h2><div class="wb">
  <p style="margin-top:0">You're the new Tier 1 tech at Ridgeline Logistics. Answer calls, help walk-ups, and work tickets in Active Directory. Fix what you can, escalate what you can't, and document everything.</p>
  <h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin-bottom:6px">Choose your difficulty</h3>
- <div class="diffs">${Object.entries(DIFF).map(([k,d])=>`<button class="diff ${k==="beginner"?"rec":""}" data-a="start" data-diff="${k}"><span class="dn">${d.label}${k==="beginner"?' <span class="tag">Recommended</span>':""}</span><span class="dd">${d.desc}</span></button>`).join("")}</div>
+ ${hasSave()?`<div class="diffs"><button class="diff rec" data-a="continue"><span class="dn">Continue your shift <span class="tag">Saved</span></span><span class="dd">${esc(saveSummary(readSave()))}</span></button></div><h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin:0 0 6px">Or start a new shift</h3>`:""}
+ <div class="diffs">${Object.entries(DIFF).map(([k,d])=>`<button class="diff ${k==="beginner"&&!hasSave()?"rec":""}" data-a="start" data-diff="${k}"><span class="dn">${d.label}${k==="beginner"?' <span class="tag">Recommended</span>':""}</span><span class="dd">${d.desc}</span></button>`).join("")}</div>
  <h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin-bottom:4px">House rules</h3>
  <ul style="margin-top:0"><li>Verify identity before any password reset.</li><li>No HR ticket, no new account.</li><li>Access changes need approval.</li><li>Anything shady goes to Security.</li></ul>
  <p class="meta" style="margin-bottom:0">Move with arrow keys / WASD or the D-pad. A (Space) talks and uses things.${best?" Best score: "+best+".":""}</p></div></div>`}
@@ -1734,7 +1920,10 @@ document.addEventListener("click",e=>{
   if(!b||b.disabled)return;
   const d=b.dataset,a=d.a,id=d.id?Number(d.id):null;
   switch(a){
-   case"start":sfx.blip();newGame(d.diff);return;
+   case"start":if(hasSave()&&!confirm("Start a new shift? This replaces your saved game."))return;sfx.blip();clearSave();newGame(d.diff);return;
+   case"continue":sfx.blip();loadGame();return;
+   case"skip-intro":endCut();return;
+   case"savequit":saveGame();S={screen:"title"};document.getElementById("coach").innerHTML="";document.getElementById("callpanel").innerHTML="";renderUI();return;
    case"title":S={screen:"title"};document.getElementById("coach").innerHTML="";renderUI();return;
    case"pause":S.paused=!S.paused;break;
    case"mute":muted=!muted;break;
@@ -1853,8 +2042,10 @@ function onBind(e){
 document.addEventListener("input",onBind);document.addEventListener("change",onBind);
 document.addEventListener("keydown",e=>{
   if(document.activeElement&&document.activeElement.id==="np-text"){if(e.key==="Escape")document.activeElement.blur();return}
-  if(S.screen==="title"&&(e.key==="Enter")){newGame("beginner");return}
+  if(S.screen==="title"&&(e.key==="Enter")){if(hasSave())loadGame();else newGame("beginner");return}
   if(S.screen!=="game")return;
+  if(S.cut&&!S.dlg&&(e.key==="Escape")){endCut();return}
+  if(S.cut&&e.key==="Escape"&&S.dlg){endCut();return}
   const typing=/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||"");
   if(S.modal&&S.modal.type!=="note"&&e.key==="Escape"){S.modal=null;uiDirty=true;renderUI();return}
   if(S.pc.open){
