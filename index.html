@@ -53,6 +53,8 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 .keys{color:var(--muted);font-size:17px;text-align:center}
 @media (hover:hover) and (pointer:fine){.pad{display:none}}
 .kbhint{color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 22px;justify-content:center;background:var(--panel);border:3px solid var(--edge);border-top:0;padding:5px 10px;font-size:19px;color:var(--ink)}
+.legend kbd{display:inline-block;min-width:22px;text-align:center;font-family:'Silkscreen',monospace;font-size:11px;background:var(--panel2);color:var(--ink);border:2px solid var(--edge);box-shadow:0 2px 0 var(--edge);padding:1px 5px;margin:0 2px;vertical-align:2px}
 @media (hover:none),(pointer:coarse){.kbhint{display:none}}
 @media (max-width:600px){.logo{font-size:18px}.stat,.hbtn{font-size:17px;padding:0 6px}.hud{gap:4px}.keys{display:none}.dpad{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px)}.ab button{width:58px;height:58px}.pad{margin-top:6px}.tree{width:42%}}
 .screen{position:fixed;inset:0;z-index:40;overflow-y:auto;background-color:var(--bg);background-image:radial-gradient(var(--dots) 1.5px,transparent 1.5px);background-size:8px 8px;padding:20px 12px;padding-top:calc(20px + env(safe-area-inset-top,0px))}
@@ -358,7 +360,14 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
     </div>
   </div>
   <div class="stage" id="stage"><canvas id="cv"></canvas><div id="dlgbox"></div><div id="pausebox"></div></div>
-  <div class="hint"><span id="h-goal" class="obj"></span><span><span id="h-face"></span> <span class="kbhint">&nbsp;&middot; Move: Arrows/WASD &middot; A: Space &middot; B: Esc</span></span></div>
+  <div class="hint"><span id="h-goal" class="obj"></span><span><span id="h-face"></span> </span></div>
+  <div class="legend kbhint" aria-label="Controls">
+    <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>&#8593;</kbd><kbd>&#8592;</kbd><kbd>&#8595;</kbd><kbd>&#8594;</kbd> Move</span>
+    <span><kbd>Enter</kbd> or <kbd>Space</kbd> Talk / Use</span>
+    <span><kbd>Esc</kbd> Back</span>
+    <span><kbd>P</kbd> Pause</span>
+    <span><kbd>&minus;</kbd> <kbd>+</kbd> Zoom</span>
+  </div>
   <div id="coach-inline"></div>
   <div class="pad">
     <div class="dpad">
@@ -1370,8 +1379,8 @@ function bubble(c,px,py,t,ch){const b=Math.floor(t/300)%2;py-=b;R(c,"#1a1612",px
   if(ch==="!"){R(c,"#c0392b",px+7,py-9,2,4);R(c,"#c0392b",px+7,py-4,2,1)}else{R(c,"#27457d",px+6,py-9,4,1);R(c,"#27457d",px+9,py-8,1,2);R(c,"#27457d",px+7,py-6,2,1);R(c,"#27457d",px+7,py-4,2,1)}}
 function resize(){
   const st=document.getElementById("stage");if(!st)return;const w=st.clientWidth||360;DPR=Math.min(window.devicePixelRatio||1,2);
-  SCALE=Math.max(2,Math.floor(w/(TS*16)));VW=w/(TS*SCALE);
-  const padOn=getComputedStyle(document.querySelector(".pad")).display!=="none";const top=st.getBoundingClientRect().top;const avail=window.innerHeight-top-(padOn?(window.innerWidth<600?275:170):56);
+  SCALE=Math.min(6,Math.max(2,Math.floor(w/(TS*22))+(window.ZOOM||0)));VW=w/(TS*SCALE);
+  const padOn=getComputedStyle(document.querySelector(".pad")).display!=="none";const top=st.getBoundingClientRect().top;const avail=window.innerHeight-top-(padOn?(window.innerWidth<600?275:170):100);
   const maxH=Math.max(TS*SCALE*7,Math.min(avail,window.innerHeight*(padOn?0.62:0.9)));VH=Math.min(MH,Math.max(7,Math.floor(maxH/(TS*SCALE))));
   cv.width=Math.round(w*DPR);cv.height=Math.round(VH*TS*SCALE*DPR);cv.style.height=(VH*TS*SCALE)+"px";st.style.setProperty("--stageH",(VH*TS*SCALE)+"px");
 }
@@ -1627,9 +1636,9 @@ function interact(){
 }
 function faceHint(){
   if(!S.npc||S.screen!=="game")return"";
-  const[fx,fy]=facing();const id=npcAt(fx,fy);if(id)return"A: Talk to "+npcName(id);
+  const K=matchMedia("(hover:hover) and (pointer:fine)").matches?"Enter":"A";const[fx,fy]=facing();const id=npcAt(fx,fy);if(id)return K+": Talk to "+npcName(id);
   const o=OBJS[fx+","+fy];if(!o)return"";
-  return{pc:"A: Use computer",phone:"A: Use phone",desk:"Desk "+o.label,printer:"A: Check printer",rack:"Server rack",cooler:"A: Water cooler",vending:"A: Vending machine"}[o.type]||"";
+  return{pc:K+": Use computer",phone:K+": Use phone",desk:"Desk "+o.label,printer:K+": Check printer",rack:"Server rack",cooler:K+": Water cooler",vending:K+": Vending machine"}[o.type]||"";
 }
 function goalHint(){
   if(S.screen!=="game")return"";
@@ -1866,6 +1875,8 @@ document.addEventListener("keydown",e=>{
   if(e.key in KEYDIR){pressDir(KEYDIR[e.key]);e.preventDefault();return}
   if(e.key===" "||e.key==="Enter"||e.key==="e"||e.key==="E"){interact();e.preventDefault()}
   if(e.key==="p"||e.key==="P"){S.paused=!S.paused;uiDirty=true}
+  if(e.key==="-"||e.key==="_"){window.ZOOM=Math.max(-2,(window.ZOOM||0)-1);resize()}
+  if(e.key==="="||e.key==="+"){window.ZOOM=Math.min(3,(window.ZOOM||0)+1);resize()}
 });
 document.addEventListener("keyup",e=>{if(e.key in KEYDIR)releaseDir(KEYDIR[e.key])});
 window.addEventListener("blur",()=>{held.length=0});
