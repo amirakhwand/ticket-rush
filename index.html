@@ -53,6 +53,7 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 .keys{color:var(--muted);font-size:17px;text-align:center}
 @media (hover:hover) and (pointer:fine){.pad{display:none}}
 .kbhint{color:var(--muted)}
+@media (hover:none),(pointer:coarse){.dpad{grid-template-columns:repeat(3,62px)!important;grid-template-rows:repeat(3,62px)!important}.dpad button{font-size:24px}.ab{gap:12px}.ab button{width:74px!important;height:74px!important;font-size:24px}.pad{margin-top:10px;padding:0 4px}}
 .legend{display:flex;flex-wrap:wrap;gap:6px 22px;justify-content:center;background:var(--panel);border:3px solid var(--edge);border-top:0;padding:5px 10px;font-size:19px;color:var(--ink)}
 .legend kbd{display:inline-block;min-width:22px;text-align:center;font-family:'Silkscreen',monospace;font-size:11px;background:var(--panel2);color:var(--ink);border:2px solid var(--edge);box-shadow:0 2px 0 var(--edge);padding:1px 5px;margin:0 2px;vertical-align:2px}
 @media (hover:none),(pointer:coarse){.kbhint{display:none}}
@@ -108,6 +109,8 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 .coachcard .cwait{color:#b8392e;animation:blink 1.4s steps(2) infinite}
 .cbtn{background:#f2d45c;border:3px solid #1d1a16;box-shadow:2px 2px 0 #1d1a16;padding:2px 14px;font-family:'Silkscreen',monospace;font-size:13px;margin-top:4px}
 .coachcard.inl{position:static;width:auto;margin-top:10px;box-shadow:4px 4px 0 #1d1a16}
+.coachcard.ingm{top:calc(64px + env(safe-area-inset-top,0px));bottom:auto;right:16px}
+@media (max-width:600px){.coachcard.ingm{top:calc(6px + env(safe-area-inset-top,0px));right:6px}}
 .coachcard.pcm{bottom:calc(52px + env(safe-area-inset-bottom,0px))}
 @media (max-width:600px){.coachcard{top:calc(6px + env(safe-area-inset-top,0px));bottom:auto;right:6px;font-size:18px}}
 .helpwin{max-width:720px}
@@ -1475,7 +1478,7 @@ function bubble(c,px,py,t,ch){const b=Math.floor(t/300)%2;py-=b;R(c,"#1a1612",px
 function resize(){
   const st=document.getElementById("stage");if(!st)return;const w=st.clientWidth||360;DPR=Math.min(window.devicePixelRatio||1,2);
   SCALE=Math.min(6,Math.max(2,Math.floor(w/(TS*22))+(window.ZOOM||0)));VW=w/(TS*SCALE);
-  const padOn=getComputedStyle(document.querySelector(".pad")).display!=="none";const top=st.getBoundingClientRect().top;const avail=window.innerHeight-top-(padOn?(window.innerWidth<600?275:170):100);
+  const padOn=getComputedStyle(document.querySelector(".pad")).display!=="none";const top=st.getBoundingClientRect().top;const avail=window.innerHeight-top-(padOn?(window.innerWidth<600?320:240):100);
   const maxH=Math.max(TS*SCALE*7,Math.min(avail,window.innerHeight*(padOn?0.62:0.9)));VH=Math.min(MH,Math.max(7,Math.floor(maxH/(TS*SCALE))));
   cv.width=Math.round(w*DPR);cv.height=Math.round(VH*TS*SCALE*DPR);cv.style.height=(VH*TS*SCALE)+"px";st.style.setProperty("--stageH",(VH*TS*SCALE)+"px");
 }
@@ -1809,9 +1812,9 @@ function setDifficulty(nd){
 /* ---------- Tutorial ---------- */
 const TUT=[
  {title:"Welcome to Ticket Rush",text:"You're a Tier 1 help desk tech. People will call, walk up to your desk, and send tickets. Your job is to figure out the problem, fix it in Active Directory, and write it up. This tour takes about two minutes, and the clock is paused while you do it.",next:true},
- {title:"Walking around",sel:".dpad",text:"Move with the arrow keys or WASD on a keyboard, or the D-pad under the game on a phone. You're the one in the teal shirt with the yellow badge. Take a few steps now.",done:()=>P.step>=(S.tutStep0||0)+4},
- {title:"Talking to people",tile:()=>[S.npc["rick.alvarez"].x,S.npc["rick.alvarez"].y],text:"Rick, your Tier 2 teammate, sits at the other desk in the IT room (to your right). Walk next to him, face him, and press A (Space or Enter on a keyboard). The hint bar under the game tells you what you're facing.",done:()=>S.tutFlags.rick},
- {title:"Log on to your computer",tile:[3,2],text:"Your desk is the one with the bright blue monitor in the top-left of the IT room. Stand right below it, face up, and press A.",done:()=>S.pc.open},
+ {title:"Walking around",sel:".dpad",text:"Move with {MOVE}. You're the one in the teal shirt with the yellow badge. Take a few steps now.",done:()=>P.step>=(S.tutStep0||0)+4},
+ {title:"Talking to people",tile:()=>[S.npc["rick.alvarez"].x,S.npc["rick.alvarez"].y],text:"Rick, your Tier 2 teammate, sits at the other desk in the IT room (to your right). Walk next to him, face him, and press {USE}. The hint bar under the game tells you what you're facing.",done:()=>S.tutFlags.rick},
+ {title:"Log on to your computer",tile:[3,2],text:"Your desk is the one with the bright blue monitor in the top-left of the IT room. Stand right below it, face up, and press {USE}.",done:()=>S.pc.open},
  {title:"Open FixFlow",sel:()=>S.pc.app?'.tbtn[data-app="ff"]':'.dicon[data-app="ff"]',text:"This is your Windows desktop. Open FixFlow with the icon on the left or the button on the taskbar at the bottom. FixFlow is your ticket system, like ServiceNow.",done:()=>S.pc.open&&S.pc.app==="ff"},
  {title:"How tickets work",sel:".snmain",text:"Tickets show up in this list. Click a ticket number to open it. Each ticket has the caller's info, a 'Next step' box, a KB article with instructions, and an activity log. When you're done, close it with one of the buttons at the top: Resolve (you fixed it), On Hold (waiting on someone, like HR), or Reassign (it belongs to another team).",next:true},
  {title:"Open Active Directory",sel:()=>S.pc.app?'.tbtn[data-app="aduc"]':'.dicon[data-app="aduc"]',text:"Now click 'Active Directory Users and Computers' on the taskbar. This is where you manage employee accounts.",done:()=>S.pc.open&&S.pc.app==="aduc"},
@@ -1820,7 +1823,7 @@ const TUT=[
  {title:"The important tabs",sel:()=>S.pc.dlgs.length?".ptabs":null,text:"General has his name and contact info. Account has lockouts, password options, and when the account expires. Member Of lists his groups, and groups are how people get access to shared drives, VPN, and printers. Click through the tabs, then press Cancel.",done:()=>S.pc.open&&!S.pc.dlgs.length&&S.tutSaw},
  {title:"The actions menu",sel:'tr[data-k="u:tom.reyes"] .rowmore',text:"To do something to an account, like reset a password, unlock it, disable it, or move it, open its actions menu. Right-click it, Ctrl+click on a Mac, or click the ⋯ button that appears on the row. Open the actions menu on Tom now.",done:()=>S.pc.open&&S.pc.menu&&S.pc.menu.k==="u:tom.reyes"},
  {title:"Calls and walk-ups",sel:()=>S.pc.menu?null:".tlogoff",text:"That menu is where you'll do most of your work. Press Escape to close it, then click 'Log off' in the bottom right to go back to the office.",done:()=>!S.pc.open},
- {title:"You're ready",tile:[4,2],text:"When the phone next to your monitor rings, a ! appears over it. Face it and press A to answer. People who walk up stand next to your desk with a ! over their head. Use Notes to jot things down, Help for the full guide, and Settings to change difficulty any time.",next:true,last:true}
+ {title:"You're ready",tile:[4,2],text:"When the phone next to your monitor rings, a ! appears over it. Face it and press {USE} to answer. People who walk up stand next to your desk with a ! over their head. Use Notes to jot things down, Help for the full guide, and Settings to change difficulty any time.",next:true,last:true}
 ];
 function startTut(){S.tutT0=performance.now();S.tutShow=false;S.tut=0;S.tutStep0=P.step;S.tutFlags={};S.tutSaw=false;uiDirty=true}
 function endTut(){S.tut=null;uiDirty=true;if(DIFF[S.diff].waves&&S.wave<0)startWave(0)}
@@ -1846,14 +1849,15 @@ function renderCall(){
   const lines=tk.transcript.filter(m=>!(m.who==="System"&&/^You (answer|call|visit)/.test(m.text)));
   return`<div class="callp ${S.pc.open?"onpc":"ingame"}" role="region" aria-label="Conversation with ${esc(name)}"><div class="callh" data-a="call-min"><span class="dot"></span><b>${label} ${esc(name)}</b><span class="inc">INC0${tk.id}</span><button data-a="call-min" aria-label="${S.callMin?"Expand":"Minimize"}">${S.callMin?"&#9634;":"&#8211;"}</button><button data-a="call-hide" aria-label="Hide conversation">&#10005;</button></div>${S.callMin?"":`<div class="callb" id="callb">${lines.map(m=>`<p class="${m.me?"me":m.sys?"sys":""}"><b>${esc(m.who)}:</b> ${esc(m.text)}</p>`).join("")}</div>${opts.length?`<div class="callq"><small>Ask or say:</small>${opts.map(o=>`<button data-a="call-ask" data-i="${o.i}">${esc(o.q.q)}</button>`).join("")}</div>`:""}`}</div>`;
 }
+function devText(t){const kb=matchMedia("(hover:hover) and (pointer:fine)").matches;return t.replace(/\{USE\}/g,kb?"Space or Enter":"the A button").replace(/\{MOVE\}/g,kb?"the arrow keys or WASD":"the on-screen arrows")}
 function renderCoach(inl){
   if(S.screen!=="game"||S.tut==null)return"";const st=TUT[S.tut];
-  return`<div class="coachcard ${S.pc.open?"pcm":""} ${inl?"inl":""} ${S.tutPop?"pop":""}" role="dialog" aria-label="Tutorial"><div class="ch1"><span>Tour ${S.tut+1} / ${TUT.length}</span><button data-a="tut-skip">Skip tour</button></div><b>${esc(st.title)}</b><p>${esc(st.text)}</p>${st.next?`<button class="cbtn" data-a="tut-next">${st.last?"Let's go!":"Next"}</button>`:`<p class="cwait">Your turn&hellip;</p>${(st.sel||st.tile)&&!tutRingOn()?'<button class="clink" data-a="tut-show">Stuck? Show me where</button>':""}`}</div>`;
+  return`<div class="coachcard ${S.pc.open?"pcm":"ingm"} ${inl?"inl":""} ${S.tutPop?"pop":""}" role="dialog" aria-label="Tutorial"><div class="ch1"><span>Tour ${S.tut+1} / ${TUT.length}</span><button data-a="tut-skip">Skip tour</button></div><b>${esc(st.title)}</b><p>${esc(devText(st.text))}</p>${st.next?`<button class="cbtn" data-a="tut-next">${st.last?"Let's go!":"Next"}</button>`:`<p class="cwait">Your turn&hellip;</p>${(st.sel||st.tile)&&!tutRingOn()?'<button class="clink" data-a="tut-show">Stuck? Show me where</button>':""}`}</div>`;
 }
 /* ---------- Help & settings ---------- */
 const HELP={
  basics:["Basics",`<p><b>Your goal:</b> handle every ticket correctly. Fix it, document it, and follow security rules.</p>
-  <p><b>Controls:</b> arrow keys / WASD or the D-pad to move. A (Space/Enter) to talk or use things. B (Esc) to back out.</p>
+  <p><b>Controls:</b> arrow keys or WASD to move. Space or Enter to talk or use things. Esc to back out. P pauses, M toggles music, and &minus; / + zoom. On a phone, use the on-screen arrows and the A (talk/use) and B (back) buttons.</p>
   <p><b>The office:</b> your computer is the desk with the bright monitor in the IT room. Your phone sits right next to it. A <b>!</b> bubble means something needs you: a ringing phone, someone waiting at your desk, or a person you should visit.</p>
   <p><b>Three ways tickets arrive:</b> phone calls (answer your desk phone), walk-ups (they stand by your desk), and portal tickets (they just appear in FixFlow).</p>
   <p><b>Waves:</b> on Beginner and Standard, tickets come in small waves. When a wave is cleared, the clock stops until you press <b>Start wave</b>.</p>
@@ -2275,7 +2279,7 @@ function renderTitle(){const best=bestScore();return`${siteNav("play")}<h1 class
  <div class="diffs">${Object.entries(DIFF).map(([k,d])=>`<button class="diff ${k==="beginner"&&!hasSave()?"rec":""}" data-a="start" data-diff="${k}"><span class="dn">${d.label}${k==="beginner"?' <span class="tag">Recommended</span>':""}</span><span class="dd">${d.desc}</span></button>`).join("")}</div>
  <h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin-bottom:4px">House rules</h3>
  <ul style="margin-top:0"><li>Verify identity before any password reset.</li><li>No HR ticket, no new account.</li><li>Access changes need approval.</li><li>Anything shady goes to Security.</li></ul>
- <p class="meta" style="margin-bottom:0">Move with arrow keys / WASD or the D-pad. A (Space) talks and uses things.${best?" Best shift score: "+best+".":""}</p></div></div>`}
+ <p class="meta" style="margin-bottom:0">Move with the arrow keys or WASD. Space or Enter talks and uses things.${best?" Best shift score: "+best+".":""}</p></div></div>`}
 function renderEnd(){
   const list=counted(),total=totalScore(),avg=Math.round(total/list.length);
   const rank=avg>=85?"Ready for Tier 2":avg>=65?"Solid Tier 1":avg>=40?"Still learning":"Back to training";
@@ -2301,7 +2305,7 @@ function renderDialogBox(){
 function renderUI(){
   uiDirty=false;
   {const cp=document.getElementById("callpanel");if(cp){cp.innerHTML=renderCall();const cb=document.getElementById("callb");if(cb)cb.scrollTop=cb.scrollHeight}}
-  const coachEl=document.getElementById("coach"),coachIn=document.getElementById("coach-inline");const inl=!(S.pc&&S.pc.open)&&window.innerWidth>600;if(coachEl)coachEl.innerHTML=inl?"":renderCoach();if(coachIn)coachIn.innerHTML=inl?renderCoach(true):"";
+  const coachEl=document.getElementById("coach"),coachIn=document.getElementById("coach-inline");const inl=false;if(coachEl)coachEl.innerHTML=inl?"":renderCoach();if(coachIn)coachIn.innerHTML=inl?renderCoach(true):"";
   const scr=document.getElementById("screen"),game=document.getElementById("game"),pc=document.getElementById("pc");
   if(S.screen==="home"||S.screen==="about"){scr.hidden=false;scr.classList.add("sitemode");scr.innerHTML=S.screen==="home"?renderHome():renderAbout();game.hidden=true;pc.hidden=true;document.getElementById("modal").innerHTML="";if(S.screen==="home")drawPreview();return}
   scr.classList.remove("sitemode");
