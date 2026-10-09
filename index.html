@@ -76,6 +76,12 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 .qs{display:flex;flex-direction:column;align-items:stretch}
 .qs .btn{text-align:left}
 
+.daytabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.dtab{text-align:left;background:var(--panel2);border:3px solid var(--edge);box-shadow:3px 3px 0 var(--edge);padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.dtab.on{background:#27457d;color:#fff}
+.dtab .dn{font-family:"Silkscreen",monospace;font-size:13px}
+.dtab .dd{font-size:17px;opacity:.85}
+@media (max-width:560px){.daytabs{grid-template-columns:1fr}}
 .diffs{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .diff{text-align:left;background:var(--panel2);border:3px solid var(--edge);box-shadow:3px 3px 0 var(--edge);padding:8px 12px;display:flex;flex-direction:column;gap:2px}
 .diff.rec{background:var(--note);color:var(--noteInk)}
@@ -409,7 +415,7 @@ const DIFF={
  beginner:{label:"Beginner",ms:4000,spdDiv:0,kb:"open",waves:true,desc:"Tickets come in small waves you start when you're ready. Slow clock, step-by-step KB articles, and no speed penalty."},
  standard:{label:"Standard",ms:2200,spdDiv:30,kb:"closed",waves:true,desc:"Waves with a normal clock. KB articles are there if you need them. Speed counts a little."},
  expert:{label:"Expert",ms:1250,spdDiv:15,kb:"none",waves:false,desc:"A real shift: tickets arrive on their own schedule, the clock runs fast, no KB articles, and the shift ends at 5:00 PM."}};
-const WAVES=[
+const WAVES1=[
  {name:"Morning: password problems",ids:[1001,1002],start:0},
  {name:"New hire requests",ids:[1003,1004],start:60},
  {name:"Moves and exits",ids:[1005,1007],start:120},
@@ -535,7 +541,7 @@ function statusOf(u){if(!u.enabled)return"Disabled";if(u.expires!=="Never"&&u.ex
 /* =========================================================
    TICKETS
    ========================================================= */
-const TICKETS=[
+const TICKETS1=[
 {id:1001,title:"Password expired, can't get in",npc:"dana.brooks",from:"Dana Brooks",dept:"Sales",desk:"S-04",priority:"Medium",via:"phone",arrive:3,
  opening:"It says my password expired and now nothing works. I have a client call in 10 minutes!",
  dialog:[
@@ -739,6 +745,7 @@ const TICKETS=[
   return res(fix,sec,L)}}
 ];
 
+let TICKETS=TICKETS1,WAVES=WAVES1;
 /* =========================================================
    WORLD
    ========================================================= */
@@ -802,9 +809,9 @@ function T(id){return S.tickets.find(t=>t.id===id)}
 function npcName(id){const u=S.ad&&S.ad.users[id];return u?u.name:(NAMES[id]||id)}
 function bestScore(){try{return Number(localStorage.getItem("ticketrush-best")||0)}catch(e){return 0}}
 function saveBest(v){try{if(v>bestScore())localStorage.setItem("ticketrush-best",String(v))}catch(e){}}
-function newGame(diff,opts){opts=opts||{};
+function newGame(diff,opts){opts=opts||{};const day=DAYS[opts.day]?Number(opts.day):1;TICKETS=DAYS[day].tickets;WAVES=DAYS[day].waves;
   diff=DIFF[diff]?diff:"beginner";const waves=DIFF[diff].waves;
-  S={screen:"game",diff,wave:-1,waveDone:false,t:0,ad:initAD(),paused:false,dlg:null,modal:null,
+  S={screen:"game",diff,day,wave:-1,waveDone:false,t:0,ad:(()=>{const a=initAD();if(day===2)day2Setup(a);return a})(),paused:false,dlg:null,modal:null,
     pc:{open:false,app:null,path:"Ridgeline/Users",selKey:null,collapsed:new Set(),dlgs:[],menu:null,mbar:null,adv:false,ffSel:null,ffView:"list",ffFilter:"active",ffClose:null},
     npc:{},tickets:TICKETS.map(tk=>Object.assign({},tk,{arrive:waves?Infinity:tk.arrive,status:"waiting",flags:{},transcript:[],contacted:false,atDesk:false,badQs:0,asked:{},result:null,notes:shuffle(tk.notes)}))};
   for(const n of NPCS){const[x,y]=DESKS[n.desk];S.npc[n.id]={x,y:y+1,dir:3,walkup:false,hidden:false,line:0}}
@@ -817,6 +824,7 @@ function newGame(diff,opts){opts=opts||{};
   startIntro(()=>afterIntro(waves));
 }
 function afterIntro(waves){
+  if(S.day===2){if(waves)startWave(0);return}
   if(waves)say("Rick Alvarez",(S.introSeen?"Glad you survived Mike's tour! Quick heads-up:":"Welcome to Ridgeline! I'm Rick, the Tier 2 admin.")+" Today the tickets come in waves. Clear a wave, catch your breath, then start the next one when you're ready.",()=>choose("Rick Alvarez","First day? I can give you a quick tour of how everything works.",[{label:"Yes, show me around (recommended)",fn:()=>startTut()},{label:"No thanks, I know the basics",fn:()=>say("Rick Alvarez","Okay! Your computer is the desk with the bright monitor, and your phone is right next to it. Help and Settings are at the top if you need them.",()=>startWave(0))}]));
   else say("Rick Alvarez","Expert shift. Tickets arrive on their own schedule, the clock runs fast, and there are no KB articles. Good luck.");
 }
@@ -851,10 +859,11 @@ function running(){return S.screen==="game"&&!S.cut&&!(S.bannerUntil&&performanc
 function spend(min){S.t+=min;tick()}
 function tick(){
   const m=S.ad.users["marcus.hill"],tk=T(1002);
-  if(m&&!m.locked&&m.unlockAt!=null&&!tk.flags.phoneFixed){const since=S.t-m.unlockAt;const bp=Math.min(5,Math.floor(since/3));if(bp>m.badPw)m.badPw=bp;if(m.badPw>=5){m.locked=true;m.unlockAt=null;if(tk.status==="open")toast(logonOf("marcus.hill")+" is locked out again.");uiDirty=true}}
-  if(m&&tk.flags.phoneFixed&&!m.locked)m.badPw=0;
+  if(tk){if(m&&!m.locked&&m.unlockAt!=null&&!tk.flags.phoneFixed){const since=S.t-m.unlockAt;const bp=Math.min(5,Math.floor(since/3));if(bp>m.badPw)m.badPw=bp;if(m.badPw>=5){m.locked=true;m.unlockAt=null;if(tk.status==="open")toast(logonOf("marcus.hill")+" is locked out again.");uiDirty=true}}
+  if(m&&tk.flags.phoneFixed&&!m.locked)m.badPw=0;}
+  if(S.day===2){const r=S.ad.users["ravi.iyer"],t5=T(2005);if(r&&!r.locked&&r.unlockAt!=null&&r.resetAt==null&&S.t-r.unlockAt>=5){r.locked=true;r.badPw=5;r.unlockAt=null;if(t5&&t5.status==="open")toast(logonOf("ravi.iyer")+" is locked out again.");uiDirty=true}}
   const g=S.ad.users["greg.walsh"];S.npc["greg.walsh"].hidden=!g||!g.enabled;
-  {const t7=T(1007),ln=S.npc["luis.ortega"];
+  if(T(1007)){const t7=T(1007),ln=S.npc["luis.ortega"];
    if(t7.status==="open"&&!S.gossipDone&&S.t>=t7.arrive+5&&S.diff!=="beginner"||t7.status==="open"&&!S.gossipDone&&S.diff==="beginner"&&S.t>=t7.arrive+3){
      const used=Object.values(S.npc).filter(n=>n.walkup).map(n=>n.x+","+n.y);const spot=WALKUP_SPOTS.find(s=>!used.includes(s[0]+","+s[1])&&!(P.x===s[0]&&P.y===s[1]));
      if(spot){S.gossipDone=true;Object.assign(ln,{x:spot[0],y:spot[1],dir:1,walkup:true,gossip:true});toast("Luis Ortega walked up to your desk.");uiDirty=true}}
@@ -953,9 +962,9 @@ function talkNPC(id){
   const n=S.npc[id];const tk=S.tickets.find(t=>t.status==="open"&&t.npc===id);
   if(n.walkup||tk&&tk.via==="walk-up"){if(tk)startTalk(tk,"walk");return}
   if(tk){startTalk(tk,"walk");return}
-  if(id==="robert.kim"){const cfo=T(1008);if(cfo.status==="open"){cfo.flags.exposed=true;cfo.transcript.push({who:"System",text:"You walked to Robert Kim's office. He says: \"I'm at my desk. I never called IT.\"",sys:true});say("Robert Kim",meet()+"I'm right here at my desk. I never called IT. Someone is pretending to be me? Get Security on it.");return}}
+  if(id==="robert.kim"){const cfo=T(1008);if(cfo&&cfo.status==="open"){cfo.flags.exposed=true;cfo.transcript.push({who:"System",text:"You walked to Robert Kim's office. He says: \"I'm at my desk. I never called IT.\"",sys:true});say("Robert Kim",meet()+"I'm right here at my desk. I never called IT. Someone is pretending to be me? Get Security on it.");return}}
   if(id==="priya.shah"){const p=S.ad.users["priya.shah"];say("Priya Shah",meet()+(p?(p.groups.includes("GG_Finance_Share")?"I'm all set up. Thanks!":"I can log in now. Thanks!"):"I'm new here. Still waiting on IT for my login."));return}
-  if(id==="greg.walsh"&&T(1007).status==="open"){say("Greg Walsh",meet()+"Quiet day, huh?");return}
+  if(id==="greg.walsh"&&(T(1007)||{}).status==="open"){say("Greg Walsh",meet()+"Quiet day, huh?");return}
   const lines=FLAVOR[id]||["Hi."];say(npcName(id),meet()+lines[n.line%lines.length]);n.line++;
 }
 function usePhone(){
@@ -1036,7 +1045,7 @@ function listItems(p){
   if(p==="__saved")return items;
   childConts(p).forEach(c=>items.push({k:"o:"+c,name:leaf(c),type:CONT[c]==="ou"?"Organizational Unit":CONT[c]==="builtin"?"builtinDomain":"Container",desc:c==="Users"?"Default container for upgraded user accounts":c==="Computers"?"Default container for upgraded computer accounts":c==="Domain Controllers"?"Default container for domain controllers":"",icon:contIcon(c)}));
   Object.entries(ad.users).forEach(([s,u])=>{if(u.ou===p)items.push({k:"u:"+s,name:u.name,type:"User",desc:u.desc,icon:u.enabled?SVG.user:SVG.userdis})});
-  Object.entries(ad.groups).forEach(([g,o])=>{if(o.ou===p)items.push({k:"g:"+g,name:g,type:o.scope==="Builtin Local"?"Security Group - Domain Local":"Security Group - "+o.scope,desc:o.desc,icon:SVG.group})});
+  Object.entries(ad.groups).forEach(([g,o])=>{if(o.ou===p)items.push({k:"g:"+g,name:g,type:o.dist?"Distribution Group - Global":o.scope==="Builtin Local"?"Security Group - Domain Local":"Security Group - "+o.scope,desc:o.desc,icon:SVG.group})});
   Object.entries(ad.computers).forEach(([c,o])=>{if(o.ou===p)items.push({k:"c:"+c,name:c,type:"Computer",desc:o.desc,icon:SVG.comp})});
   return items.sort((a,b)=>a.name.localeCompare(b.name));
 }
@@ -1120,7 +1129,7 @@ function renderDlg(d){
     ${r.results?`<p style="margin:8px 0 4px">Search results: (tap a result twice to open it, or use &#8943; / right-click for actions)</p><div class="ml"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>${r.results.map(x=>`<tr class="${r.sel===x.k?"sel":""}" data-a="d-findsel" data-k="${esc(x.k)}"><td><span class="nm">${x.icon} ${esc(x.name)}<button class="rowmore" data-a="pc-rowmenu" data-k="${esc(x.k)}" title="Actions" aria-label="Actions for ${esc(x.name)}">&#8943;</button></span></td><td>${esc(x.type)}</td><td>${esc(x.desc)}</td></tr>`).join("")||'<tr><td colspan="3">No items match the current search.</td></tr>'}</tbody></table></div>`:""}`,B("Properties","d-findprops",{dis:!r.sel})+B("Close","d-cancel"),true)}
   case"gprops":{const g=S.ad.groups[d.name];const mem=d.name==="Domain Users"?Object.values(S.ad.users).filter(u=>!u.system||u.name==="Administrator"):Object.values(S.ad.users).filter(u=>u.groups.includes(d.name));
     const tabs=["General","Members","Managed By"];
-    const page=d.tab==="General"?`<div class="frow">${SVG.group}<b>${esc(d.name)}</b></div><div class="frow"><label>Group name (pre-Windows 2000):</label>${inp("x",d.name,{ro:true})}</div><div class="frow"><label>Description:</label>${inp("x",g.desc,{ro:true})}</div><div class="gbox"><span class="gl">Group scope</span>${g.scope}</div><div class="gbox"><span class="gl">Group type</span>Security</div>`
+    const page=d.tab==="General"?`<div class="frow">${SVG.group}<b>${esc(d.name)}</b></div><div class="frow"><label>Group name (pre-Windows 2000):</label>${inp("x",d.name,{ro:true})}</div><div class="frow"><label>Description:</label>${inp("x",g.desc,{ro:true})}</div><div class="gbox"><span class="gl">Group scope</span>${g.scope}</div><div class="gbox"><span class="gl">Group type</span>${g.dist?"Distribution":"Security"}</div>`
       :d.tab==="Members"?`<div>Members:</div><div class="ml"><table><thead><tr><th>Name</th><th>Active Directory Domain Services Folder</th></tr></thead><tbody>${mem.map(u=>`<tr><td>${SVG.user} ${esc(u.name)}</td><td>${esc(canon(u.ou))}</td></tr>`).join("")}</tbody></table></div><p style="color:#555">Tip: In this lab, add people to groups from the user's Member Of tab.</p>`
       :`<div class="frow"><label>Name:</label>${inp("x",d.name==="IT_Admins"?"Rick Alvarez":"",{ro:true})}</div>`;
     return wrapDlg(d,d.name+" Properties",`<div class="ptabs">${tabs.map(t=>`<button class="ptab ${d.tab===t?"on":""}" data-a="d-tab" data-t="${t}">${t}</button>`).join("")}</div><div class="ppage">${page}</div>`,B("OK","d-cancel",{def:true})+B("Cancel","d-cancel"))}
@@ -1314,7 +1323,7 @@ function checkNames(d){
 }
 function doFind(d){const q=d.draft.name.trim().toLowerCase();const out=[];
   Object.entries(S.ad.users).forEach(([s,u])=>{if(!q||u.name.toLowerCase().includes(q)||s.includes(q)||(u.logon||'').includes(q)||(u.empId||'').toLowerCase().includes(q))out.push({k:"u:"+s,name:u.name,type:"User",desc:u.desc,icon:u.enabled?SVG.user:SVG.userdis})});
-  Object.entries(S.ad.groups).forEach(([g,o])=>{if(!q||g.toLowerCase().includes(q))out.push({k:"g:"+g,name:g,type:"Security Group",desc:o.desc,icon:SVG.group})});
+  Object.entries(S.ad.groups).forEach(([g,o])=>{if(!q||g.toLowerCase().includes(q))out.push({k:"g:"+g,name:g,type:o.dist?"Distribution Group":"Security Group",desc:o.desc,icon:SVG.group})});
   Object.entries(S.ad.computers).forEach(([c,o])=>{if(!q||c.toLowerCase().includes(q))out.push({k:"c:"+c,name:c,type:"Computer",desc:o.desc,icon:SVG.comp})});
   d.draft.results=out.sort((a,b)=>a.name.localeCompare(b.name));d.draft.sel=null}
 function menuAction(a){
@@ -1504,6 +1513,204 @@ function qVisible(tk,o){return !tk.asked[o.i]&&(!o.q.desk||tk.atDesk)&&!(o.q.bad
   // 1010
   tk(1010).notes.push({t:"Rejoined WS-HR-03 to domain and reset Angela's password as a precaution.",why:"Her password wasn't the problem. Notes should record what actually fixed the issue, and unnecessary resets aren't 'precautions'."});
 })();
+/* =========================================================
+   DAY 2: account admin tickets
+   ========================================================= */
+const WAVES2=[
+ {name:"Morning: account hiccups",ids:[2001,2002],start:0},
+ {name:"HR requests",ids:[2003,2004],start:60},
+ {name:"Something's not right",ids:[2005,2006],start:150},
+ {name:"Comings and goings",ids:[2007,2008],start:260}];
+Object.assign(KB,{
+ 2001:{cat:"Account Access",sub:"Password change",title:"KB0012: \"You do not have permission to change your password\"",steps:["Verify the caller's identity first.","Open Properties > Account. Look for \"User cannot change password\". If it's checked, the user can't set their own password, even when it expires.","Uncheck it (unless there's a documented reason, like a shared kiosk account).","Reset to a temp password with \"User must change password at next logon\". AD won't let you check both boxes at once."]},
+ 2002:{cat:"Email",sub:"Distribution list",title:"KB0060: Adding someone to a distribution list",steps:["Distribution lists (DL_...) are for email only. Security groups (GG_...) grant access to files and systems. Don't mix them up.","A manager can approve list membership for their own team.","Properties > Member Of > Add, type the list name, Check Names, OK.","Only add what was requested. Extra access (like VPN) needs its own request and business reason."]},
+ 2003:{cat:"Account Access",sub:"Return from leave",title:"KB0034: Restoring access after a leave of absence",steps:["Confirm the return-to-work form from HR.","Accounts are disabled in place during leave. Enable it: right-click > Enable Account, or uncheck \"Account is disabled\".","Long leaves mean an expired password. Reset to a temp password with change at next logon.","Clear the leave note from the Description so nobody re-disables it by mistake. Don't create a new account."]},
+ 2004:{cat:"Account Access",sub:"Name change",title:"KB0035: Legal name changes",steps:["Work from the HR name change form.","Update Last name, Display name, and E-mail on the General tab.","Logon names don't change after a name change (company policy), so the user keeps logging in the same way.","Never create a second account for a name change."]},
+ 2005:{cat:"Security",sub:"Suspicious lockout",title:"KB0041: Lockouts the user didn't cause",steps:["Verify the caller first.","If the user says they haven't tried to log in, treat it as a possible attack (like a password spray), not a forgotten password.","Ask Tier 2 to check where the failed logins came from.","Don't just unlock it. Reset the password (so a guessed password is useless), then Reassign to Security Operations."]},
+ 2006:{cat:"Hardware / Workstation",sub:"Group Policy",title:"KB0051: New computer missing printers, drives, or policies",steps:["Group Policy (printers, drive maps, screen lock) applies by OU.","Newly joined computers land in the default \"Computers\" container, where workstation policies don't apply.","Find the computer and Move it to Ridgeline > Computers > Workstations.","Have the user restart so the policies apply. The user's account and groups are usually fine."]},
+ 2007:{cat:"Account Access",sub:"Rehire",title:"KB0022: Rehiring a former employee",steps:["Policy: reactivate the original account. Don't create a duplicate.","Find them in Ridgeline > Disabled Users. Enable the account.","Move it to their new department's OU and add only the groups on the rehire form.","Reset to a temp password with change at next logon, and update the Description (remove the old termination note)."]},
+ 2008:{cat:"Account Access",sub:"Account expiration",title:"KB0036: Ending contractor access on a date",steps:["Only the sponsoring manager can change a contractor's end date.","Don't disable early if they're still working. Set the date instead.","Properties > Account > Account expires > End of: pick the exact last day.","\"End of 10/9\" means access stops at the end of that day."]}});
+Object.assign(CALLER,{2001:"hiroshi.nakamura",2002:"kevin.tran",2003:"janet.moore",2004:"janet.moore",2005:"ravi.iyer",2006:"kevin.tran",2007:"janet.moore",2008:"marisol.vega"});
+const VERIFY_TIP=n=>"(Tip: Click "+n+"'s name in FixFlow to open the user record and compare the Employee ID.)";
+const TICKETS2=[
+{id:2001,title:"\"No permission to change my password\"",npc:null,from:"Hiroshi Nakamura",dept:"Operations",desk:null,priority:"Medium",via:"phone",arrive:3,
+ opening:"My password expired and now it says I don't have permission to change it. I'm stuck at the login screen!",
+ dialog:[
+  {q:"Can you confirm your employee ID for me?",a:"Sure, it's NAKAMURAHI.",flag:"verified",time:true,tip:VERIFY_TIP("Hiroshi")},
+  {q:"What exactly does the error say?",a:"\"Unable to update the password. You do not have permissions to change your password.\""},
+  {q:"Have you ever changed your password before?",a:"Never! IT set the account up when I started in June and I've never touched it. Weird, right?"},
+  {q:"Did you try typing it slower?",a:"It's not about typing. It won't even let me pick a new one.",bad:true}],
+ notes:[
+  {t:"Verified via employee ID. 'User cannot change password' had been set at account creation; cleared it and reset to a temp password with change at next logon. User set a new password.",good:true},
+  {t:"Reset password.",why:"Doesn't record the actual cause, the 'User cannot change password' setting. Without that, the next tech is stuck too."},
+  {t:"Set password to never expire so this doesn't happen again.",why:"That breaks the password policy and hides the real problem."},
+  {t:"Reset Hiroshi's password to Cedar-4821! and read it to him.",why:"Never put a password in a ticket note."}],
+ check(ad,f,o){const u=ad.users["hiroshi.nakamura"],L=[];let fix=0,sec=30;
+  if(!u)return res(0,-20,["Hiroshi's account was deleted."]);
+  if(!u.cannotChange){fix+=20;L.push("Cleared 'User cannot change password'. That was the real cause.")}else L.push("'User cannot change password' is still checked. He still can't set his own password. Look on the Account tab.");
+  if(u.resetAt!=null&&u.mustChange){fix+=20}else if(u.resetAt!=null){fix+=10;L.push("Check 'User must change password at next logon' on the reset.")}else L.push("His password was never reset, so it's still expired.");
+  if(u.neverExpires){fix=Math.max(0,fix-15);sec=Math.min(sec,10);L.push("You set 'Password never expires'. That breaks policy.")}
+  if(u.resetAt!=null&&!(f.verified&&f.verified<=u.resetAt+0.01)){sec=-20;L.push("You reset the password before verifying who was on the phone.")}else if(f.verified)L.push("Verified before resetting. Good.");
+  if(o!=="resolve"){fix=Math.min(fix,15);L.push("This is a Tier 1 fix. Resolve it.")}
+  return res(fix,sec,L)}},
+{id:2002,title:"Ji-woo isn't getting Sales team emails",npc:"kevin.tran",from:"Kevin Tran",dept:"Sales",desk:"S-01",priority:"Low",via:"walk-up",arrive:20,
+ opening:"Ji-woo Park on my team isn't getting any of the Sales team emails. Everyone else got this morning's pipeline update. Can you add her to the list? I'm her manager, so consider it approved.",
+ dialog:[
+  {q:"Which list do the team emails go to?",a:"The all-sales one. DL-something. Everybody on my team's on it."},
+  {q:"Can she open the Sales shared drive okay?",a:"Yeah, the drive's fine. It's just email."},
+  {q:"Anything else while I'm in her account?",a:"Actually, yeah. Throw her in VPN_Users too. She might work from home someday.",flag:"askedElse"},
+  {q:"VPN needs its own request with a business reason. I'll just do the email list today.",a:"Fair enough. I'll send a request if she actually needs it.",flag:"heldLine",req:"askedElse",excl:"kevin2"},
+  {q:"Sure, I'll add VPN too.",a:"Great, thanks!",flag:"caved",req:"askedElse",excl:"kevin2"}],
+ notes:[
+  {t:"Added parkji to DL_Sales_All per request from her manager, Kevin Tran.",good:true},
+  {t:"Added her to the group.",why:"Which group? Requested by whom? Access changes need a clear record."},
+  {t:"Added Ji-woo to DL_Sales_All and VPN_Users per Kevin.",why:"'She might work from home someday' isn't a business reason. VPN needs its own request."},
+  {t:"Added Ji-woo to GG_Sales_Share so she gets the team emails.",why:"GG_ groups are security groups for file access. Team email goes to the DL_ distribution list."}],
+ check(ad,f,o){const u=ad.users["ji-woo.park"],L=[];let fix=0,sec=30;
+  if(!u)return res(0,-20,["Ji-woo's account was deleted."]);
+  if(u.groups.includes("DL_Sales_All")){fix=40;L.push("Added to DL_Sales_All. She'll get the team emails now.")}
+  else if(u.groups.includes("DL_All_Staff")){fix=15;L.push("DL_All_Staff is the company-wide list. Sales team emails go to DL_Sales_All.")}
+  else L.push("She's still not on DL_Sales_All.");
+  if(u.groups.includes("VPN_Users")){sec=10;L.push("You added VPN_Users with no real business reason. 'Someday' isn't a justification. That's least privilege.")}
+  else if(f.caved){sec=20;L.push("You agreed to add VPN without a request, even if you didn't follow through.")}
+  else if(f.heldLine)L.push("You handled the extra VPN ask the right way.");
+  if(o!=="resolve"){fix=Math.min(fix,15);L.push("A manager approving list membership for their own team is enough. Resolve it.")}
+  return res(fix,sec,L)}},
+{id:2003,title:"Return from leave: Mateo Fernández",npc:null,from:"Janet Moore (HR)",dept:"HR",desk:null,priority:"High",via:"ticket",arrive:45,
+ opening:"Mateo Fernández (Payroll & Benefits Analyst) returns from parental leave today and is at desk H-06. His account was disabled during his leave per policy. Please restore his access. Return-to-work form HR-233 attached.",
+ dialog:[
+  {q:"Open return-to-work form HR-233",a:"Employee: Mateo Fernández (FERNANDEZMA). Leave: 06/20 to 10/06. Approved by Janet Moore. Restore previous access: Yes."},
+  {q:"Message Janet: is he at his desk now?",a:"Janet: \"Yes, he's at H-06 waiting to log in. Thanks!\"",cost:2}],
+ notes:[
+  {t:"Return to work per HR-233. Enabled account, reset expired password to a temp password with change at next logon, cleared the leave note from the description.",good:true},
+  {t:"Enabled account.",why:"His password expired during leave. The note doesn't say it was reset, so the next tech won't know."},
+  {t:"Created a new account for Mateo since his old one was disabled.",why:"Never create a duplicate. Enable the existing account so he keeps his files, mailbox, and groups."},
+  {t:"Enabled account and set his password to never expire so he doesn't have trouble after leave.",why:"'Password never expires' breaks policy."}],
+ check(ad,f,o){const u=ad.users["mateo.fernandez"],L=[];let fix=0,sec=30;
+  if(!u)return res(0,-20,["You deleted Mateo's account. Returning employees keep their original account."]);
+  if(ad.created.some(k=>/^mateo/.test(k)))return res(0,0,["You created a duplicate account for Mateo. Enable his existing one instead."]);
+  if(u.enabled){fix+=15}else L.push("His account is still disabled.");
+  if(u.resetAt!=null&&u.mustChange){fix+=15}else L.push("His password expired months ago during leave. Reset it to a temp password with 'must change at next logon'.");
+  if(u.groups.includes("GG_HR_Share")&&u.ou===OU.hr)fix+=5;else L.push("His groups or OU changed. A return from leave should restore exactly what he had.");
+  if(!/leave/i.test(u.desc||""))fix+=5;else L.push("The Description still says he's on leave. Clear it so nobody disables him again by mistake.");
+  if(u.neverExpires){sec=10;L.push("You set 'Password never expires'.")}
+  if(fix>=40)L.unshift("Smooth return to work.");
+  if(o!=="resolve"){fix=Math.min(fix,15);L.push("HR approved this. Resolve it.")}
+  return res(fix,sec,L)}},
+{id:2004,title:"Name change: Aaliyah Johnson",npc:null,from:"Janet Moore (HR)",dept:"HR",desk:null,priority:"Low",via:"ticket",arrive:80,
+ opening:"Aaliyah Johnson (Training Specialist) has legally changed her last name to Grant. Please update her account. Name change form HR-238 attached.",
+ dialog:[{q:"Open name change form HR-238",a:"Old name: Aaliyah Johnson. New name: Aaliyah Grant. Update: last name, display name, e-mail (aaliyah.grant@ridgeline.com). Logon name: no change, per policy."}],
+ notes:[
+  {t:"Updated last name, display name, and e-mail to Grant per HR-238. Logon name unchanged per policy.",good:true},
+  {t:"Changed her name.",why:"Which fields? Per what form? Name changes touch several attributes."},
+  {t:"Updated last name to Grant.",why:"Incomplete. Display name and e-mail also need to change, or everyone still sees 'Johnson'."},
+  {t:"Created a new account, aaliyah.grant, so her logon matches her new name.",why:"Never create a second account for a name change. Logon names stay the same."}],
+ check(ad,f,o){const u=ad.users["aaliyah.johnson"],L=[];let fix=0,sec=30;
+  if(!u)return res(0,-20,["You deleted her account."]);
+  if(ad.created.some(k=>/^aaliyah/.test(k)))return res(0,10,["You created a second account. Name changes update the existing account."]);
+  if(u.last==="Grant")fix+=15;else L.push("Last name still says "+u.last+".");
+  if(u.name==="Aaliyah Grant")fix+=15;else L.push("Display name is still \""+u.name+"\". That's what everyone sees in email and AD.");
+  if((u.email||"").toLowerCase()==="aaliyah.grant@ridgeline.com")fix+=10;else L.push("E-mail wasn't updated to aaliyah.grant@ridgeline.com.");
+  if(fix>=40)L.unshift("All three name fields updated.");
+  if(o!=="resolve"){fix=Math.min(fix,15);L.push("HR approved this. Resolve it.")}
+  return res(fix,sec,L)}},
+{id:2005,title:"Locked out, but I'm on vacation",npc:null,from:"Ravi Iyer",dept:"Sales",desk:null,priority:"High",via:"phone",arrive:140,callerId:"(305) 555-0172",
+ opening:"I'm on vacation in Miami and just got an alert that my account is locked. Weird part? I haven't tried to log in since last Friday.",
+ dialog:[
+  {q:"Can you confirm your employee ID for me?",a:"Of course. IYERRA.",flag:"verified",time:true,tip:"(Tip: The caller ID matches the mobile number on Ravi's user record, and the employee ID matches. It really is Ravi.)"},
+  {q:"Is any device logged in with your work account? Phone, laptop, tablet?",a:"Nope. Laptop's locked in a drawer at home and my phone doesn't have work email. I'm literally on a beach."},
+  {q:"Let me ask Tier 2 where the failed logins came from.",a:"(Rick checks the VPN logs: hundreds of failed logins for iyerra in the last hour from an overseas IP address. \"That's a password spray,\" Rick says. \"Someone's guessing passwords. Get Security on it.\")",flag:"evidence",cost:3},
+  {q:"I'll just unlock it so you can enjoy your vacation.",a:"Oh, perfect. Thanks!",flag:"caved"}],
+ notes:[
+  {t:"User verified. Lockout caused by repeated failed VPN logins from an unknown overseas IP while user is on vacation; likely password spray. Reset password to temp with change at next logon. Reassigned to Security Operations.",good:true},
+  {t:"Unlocked account for user.",why:"The user didn't cause these failures. Unlocking without investigating leaves the door open for the attacker."},
+  {t:"User probably forgot his password. Unlocked and reset.",why:"Wrong cause. He hasn't logged in all week. This is a possible attack, and Security needs to know."},
+  {t:"Set password to never expire so lockouts stop while he's traveling.",why:"Makes an attack easier and breaks policy."}],
+ check(ad,f,o){const u=ad.users["ravi.iyer"],L=[];let fix=0,sec=30;
+  if(!u)return res(0,-20,["Ravi's account was deleted."]);
+  if(o==="security"){fix=25;L.push("Reassigned to Security. Exactly right for a likely password spray.")}
+  else if(o==="tier2"){fix=15;L.push("Tier 2 can help, but a likely attack belongs with Security Operations.")}
+  else{fix=5;L.push("This wasn't a forgotten password. It's a possible attack, and it needs to go to Security.")}
+  if(u.resetAt!=null&&u.mustChange)fix+=15;else L.push("Reset his password too, so a guessed password is useless to the attacker.");
+  if(!u.locked&&u.resetAt==null){sec=0;L.push("You unlocked the account without resetting the password while someone was actively guessing it.")}
+  else if(f.caved&&sec>10){sec=15;L.push("You offered to just unlock it before understanding what was happening.")}
+  if(u.resetAt!=null&&!(f.verified&&f.verified<=u.resetAt+0.01)){sec=Math.min(sec,-10);L.push("You reset the password before verifying the caller.")}
+  if(u.neverExpires){sec=Math.min(sec,0);L.push("'Password never expires' on an account under attack is a big no.")}
+  if(f.evidence)L.push("Checking where the failures came from turned a guess into evidence.");
+  return res(fix,sec,L)}},
+{id:2006,title:"New laptop: no printers or S: drive",npc:null,from:"Kevin Tran",dept:"Sales",desk:null,priority:"Medium",via:"ticket",arrive:170,
+ opening:"Ana Silva got a new laptop yesterday (WS-SL-09). None of the printers or the S: drive showed up like on everyone else's machine, and the auto screen lock isn't working either. Can you take a look?",
+ dialog:[
+  {q:"Check Ana's user account in AD",a:"(Ana's account looks normal: enabled, in the Sales OU, with GG_Sales_Share and Printers_Floor1.)"},
+  {q:"Message Ana: please restart the laptop",get a(){const c=S.ad.computers["WS-SL-09"];return c&&c.ou===OU.ws?"Ana: \"Restarting... oh nice, the printers and the S: drive just showed up!\"":"Ana: \"Restarted. Still nothing. No printers, no S: drive.\""},flag:"restart",time:true,cost:3}],
+ notes:[
+  {t:"WS-SL-09 was in the default Computers container, so workstation Group Policy didn't apply. Moved it to the Workstations OU; user restarted and printers, drives, and screen lock applied.",good:true},
+  {t:"Moved the computer.",why:"Moved where, and why? The cause (wrong OU means no Group Policy) is the useful part."},
+  {t:"Added Ana to more groups so she can see the printers.",why:"Her account was fine. The computer was in the wrong place."},
+  {t:"Reimaged the laptop.",why:"You didn't do that, and it wouldn't have helped. Notes must match what actually happened."}],
+ check(ad,f,o){const c=ad.computers["WS-SL-09"],a=ad.users["ana.silva"],L=[];let fix=0,sec=30;
+  if(!c)return res(0,10,["You deleted the computer object. Now it has to rejoin the domain from scratch."]);
+  if(c.ou===OU.ws){fix=30;L.push("Moved WS-SL-09 into the Workstations OU, where the workstation policies apply.")}
+  else L.push("WS-SL-09 is still in "+canon(c.ou)+". Group Policy for workstations only applies in Ridgeline > Computers > Workstations.");
+  if(c.ou===OU.ws&&f.restart&&c.movedAt!=null&&f.restart>=c.movedAt)fix+=10;else if(c.ou===OU.ws)L.push("Have her restart after the move so the policies actually apply.");
+  if(a&&a.groups.some(g=>!["GG_Sales_Share","Printers_Floor1","DL_Sales_All","DL_All_Staff"].includes(g))){sec=15;L.push("You changed Ana's groups. Her account was never the problem.")}
+  if(o!=="resolve"){fix=Math.min(fix,15);L.push("Moving a computer to the right OU is Tier 1 work. Resolve it.")}
+  return res(fix,sec,L)}},
+{id:2007,title:"Rehire: Patrick Murphy, Sales",npc:null,from:"Janet Moore (HR)",dept:"HR",desk:null,priority:"High",via:"ticket",arrive:250,
+ opening:"Good news: Patrick Murphy is being rehired as a Sales Rep starting today. Per policy, reactivate his original account instead of creating a new one. Rehire form HR-241 attached.",
+ dialog:[{q:"Open rehire form HR-241",a:"Employee: Patrick Murphy (MURPHYPA). Position: Sales Rep, Sales. Manager: Kevin Tran. Access: GG_Sales_Share, DL_Sales_All, Printers_Floor1. Reactivate original account: Yes."}],
+ notes:[
+  {t:"Rehire per HR-241. Reactivated original account murphypa, moved to Sales OU, added GG_Sales_Share, DL_Sales_All, and Printers_Floor1, reset to a temp password with change at next logon, updated the description.",good:true},
+  {t:"Created a new account for Patrick.",why:"Policy is to reactivate the original account. A duplicate splits his history and confuses audits."},
+  {t:"Enabled account.",why:"Incomplete. He still needs the right OU, groups, and a new password."},
+  {t:"Reactivated murphypa with his old groups plus VPN_Users.",why:"VPN wasn't on the rehire form. Give exactly what was approved."}],
+ check(ad,f,o){const u=ad.users["patrick.murphy"],L=[];let fix=0,sec=30;
+  if(!u)return res(0,-10,["You deleted his original account. Policy is to reactivate it."]);
+  if(ad.created.some(k=>/^patrick/.test(k))){fix=-10;L.push("You created a duplicate account. Policy is to reactivate the original.")}
+  if(u.enabled)fix+=10;else L.push("His original account is still disabled.");
+  if(u.ou===OU.sales)fix+=10;else L.push("Move him from Disabled Users to Ridgeline > Users > Sales.");
+  const need=["GG_Sales_Share","DL_Sales_All","Printers_Floor1"],miss=need.filter(g=>!u.groups.includes(g));fix+=10-miss.length*3;if(miss.length)L.push("Missing from the rehire form: "+miss.join(", ")+".");
+  if(u.resetAt!=null&&u.mustChange)fix+=5;else L.push("Reset his password to a temp one with change at next logon. His old one is months old.");
+  if(!/terminat/i.test(u.desc||""))fix+=5;else L.push("His Description still says 'Terminated'. Update it.");
+  if(u.groups.includes("VPN_Users")){sec=10;L.push("VPN_Users wasn't on the form. Give exactly what was approved.")}
+  fix=Math.max(0,fix);if(fix>=40)L.unshift("Clean rehire using the original account.");
+  if(o!=="resolve"){fix=Math.min(fix,15);L.push("HR approved this. Resolve it.")}
+  return res(fix,sec,L)}},
+{id:2008,title:"Contractor ending early: Chinedu Eze",npc:null,from:"Marisol Vega",dept:"IT",desk:null,priority:"Medium",via:"ticket",arrive:300,
+ opening:"Heads up: Chinedu Eze's contract ends early, at end of day this Friday, 10/9/2026. Please make sure his access stops automatically then. Don't disable him now. He's still finishing a project for me.",
+ dialog:[{q:"Check who sponsors Chinedu's contract",a:"(His Description says: Contractor - sponsor: Marisol Vega. She's the one asking, so this is approved.)"}],
+ notes:[
+  {t:"Per sponsor Marisol Vega, set account expiration to end of 10/09/2026. Account stays active until then.",good:true},
+  {t:"Disabled Chinedu's account.",why:"Too early. He's still working until Friday."},
+  {t:"Set expiration.",why:"To what date? Approved by whom?"},
+  {t:"Left the expiration at 12/31 as originally planned.",why:"The sponsor asked for an earlier end date. His access would run almost three months too long."}],
+ check(ad,f,o){const u=ad.users["chinedu.eze"],L=[];let fix=0,sec=30;
+  if(!u)return res(0,0,["You deleted his account. He's still working until Friday."]);
+  if(!u.enabled){sec=5;L.push("You disabled him now. He's still finishing a project until Friday.")}
+  if(u.expires==="2026-10-09"){fix=40;L.push("Expiration set to end of 10/9. Access stops automatically, right on time.")}
+  else if(u.expires==="2026-10-10"){fix=25;L.push("'End of 10/9' means access ends at the end of that day. You set 10/10, so he gets an extra day.")}
+  else if(u.expires==="Never"){fix=0;sec=Math.min(sec,0);L.push("A contractor account should never be set to Never expire.")}
+  else L.push("Expiration is "+usDate(u.expires)+". The sponsor asked for end of 10/9/2026.");
+  if(o!=="resolve"){fix=Math.min(fix,15);L.push("The sponsor approved this. Resolve it.")}
+  return res(fix,sec,L)}}
+];
+function day2Setup(ad){
+  const D=(n,desc)=>({ou:OU.grp,desc,scope:"Global",dist:true});
+  Object.assign(ad.groups,{DL_All_Staff:D(0,"Email: all Ridgeline staff"),DL_Sales_All:D(0,"Email: Sales team"),DL_Finance_Team:D(0,"Email: Finance team"),DL_HR_Team:D(0,"Email: HR team"),DL_Ops_Team:D(0,"Email: Operations team")});
+  const byOu={[OU.sales]:"DL_Sales_All",[OU.fin]:"DL_Finance_Team",[OU.hr]:"DL_HR_Team",[OU.ops]:"DL_Ops_Team"};
+  for(const[k,u]of Object.entries(ad.users)){if(u.system||!u.enabled)continue;u.groups.push("DL_All_Staff");const dl=byOu[u.ou];if(dl&&k!=="ji-woo.park")u.groups.push(dl)}
+  const h=ad.users["hiroshi.nakamura"];Object.assign(h,{cannotChange:true,pwdLastSet:"2026-06-30",created:"2026-06-30"});
+  const m=ad.users["mateo.fernandez"];Object.assign(m,{enabled:false,desc:"Leave of absence - returns 10/06/2026 (HR-215)",pwdLastSet:"2026-06-18"});m.groups=m.groups.filter(g=>!/^DL_/.test(g));m.groups.push("DL_All_Staff","DL_HR_Team");
+  const r=ad.users["ravi.iyer"];Object.assign(r,{locked:true,badPw:5,mobile:"(305) 555-0172"});
+  ad.computers["WS-SL-09"]={ou:"Computers",user:"ana.silva",os:"Windows 11 Enterprise",trust:true,reset:false,desc:""};
+}
+function introScript2(){const M="Mike Troy";return[
+  {t:"card",title:"DAY 2",sub:"Tuesday, 8:55 AM. Account admin day.",ms:2600,at:()=>{placeAfterIntro();const m=S.npc["mike.troy"];Object.assign(m,{x:4,y:4,dir:1});P.dir=0}},
+  {t:"say",spk:M,text:"Morning! You survived Day 1. Today's heavier account work: returns from leave, name changes, a rehire, and whatever else the day throws at us."},
+  {t:"say",spk:M,text:"Remember: read the form, change only what's approved, and if something smells like an attack, Security gets it. Have a good one!"},
+  {t:"fn",f:()=>{placeAfterIntro()}}]}
+
+const DAYS={1:{tickets:TICKETS1,waves:WAVES1,name:"Day 1: Orientation",desc:"10 tickets: password resets, lockouts, a new hire, a transfer, a termination, and your first social engineering call."},2:{tickets:TICKETS2,waves:WAVES2,name:"Day 2: Account Admin",desc:"8 tickets: password settings, distribution lists, return from leave, a name change, a suspicious lockout, Group Policy, a rehire, and contractor end dates."}};
 function luisHome(){const n=S.npc["luis.ortega"];n.gossip=false;sendHome("luis.ortega")}
 
 function setDifficulty(nd){
@@ -1595,7 +1802,7 @@ const HELP={
   <p><b>Advanced Features</b> (View menu) adds the Attribute Editor tab, which shows badPwdCount, pwdLastSet, and employeeID.</p>`],
  scoring:["Scoring",`<p>Every ticket is scored out of 100:</p><ul><li><b>Fix (40):</b> did you make the right change?</li><li><b>Security (30):</b> did you verify identity, follow approvals, and avoid giving extra access?</li><li><b>Note (15):</b> did you pick a clear, safe resolution note?</li><li><b>Speed and patience (15):</b> unnecessary questions annoy users, and on Standard and Expert slow handling costs points.</li></ul>
   <p>Security mistakes cost the most. Doing it right beats doing it fast.</p>`],
- glossary:["Glossary",`<ul><li><b>Tier 1:</b> the first line of support, which is you.</li><li><b>Tier 2:</b> more senior support for harder problems.</li><li><b>OU:</b> organizational unit, a folder in AD.</li><li><b>Security group:</b> a group that grants access to resources.</li><li><b>Lockout:</b> too many wrong passwords temporarily block the account.</li><li><b>Least privilege:</b> give people only the access they need.</li><li><b>Privilege creep:</b> old access piling up when people change roles.</li><li><b>Social engineering:</b> tricking people (like the help desk) into giving access.</li><li><b>Domain join / trust relationship:</b> the link between a PC and the domain. If it breaks, users can't log in on that PC.</li><li><b>SLA:</b> the time a ticket should be handled within.</li></ul>`]
+ glossary:["Glossary",`<ul><li><b>Tier 1:</b> the first line of support, which is you.</li><li><b>Tier 2:</b> more senior support for harder problems.</li><li><b>OU:</b> organizational unit, a folder in AD.</li><li><b>Security group:</b> a group that grants access to resources (GG_...).</li><li><b>Distribution list:</b> an email-only group (DL_...). It doesn't grant access to anything.</li><li><b>Group Policy:</b> settings (printers, drive maps, screen lock) applied to computers and users based on their OU.</li><li><b>Password spray:</b> an attacker trying common passwords against many accounts.</li><li><b>Lockout:</b> too many wrong passwords temporarily block the account.</li><li><b>Least privilege:</b> give people only the access they need.</li><li><b>Privilege creep:</b> old access piling up when people change roles.</li><li><b>Social engineering:</b> tricking people (like the help desk) into giving access.</li><li><b>Domain join / trust relationship:</b> the link between a PC and the domain. If it breaks, users can't log in on that PC.</li><li><b>SLA:</b> the time a ticket should be handled within.</li></ul>`]
 };
 function renderHelp(){const tab=S.modal.tab||"basics";return`<div class="modal"><div class="win helpwin" role="dialog" aria-modal="true" aria-label="Help"><h2><span>Help guide</span><span>Ticket Rush</span></h2><div class="wb">
  <div class="htabs">${Object.entries(HELP).map(([k,v])=>`<button class="btn ${tab===k?"primary":""}" data-a="htab" data-t="${k}">${v[0]}</button>`).join("")}</div>
@@ -1718,7 +1925,7 @@ function placeAfterIntro(){
 function startIntro(done){
   const m=S.npc["mike.troy"];Object.assign(m,{x:2,y:9,dir:1,moving:false,fx:2,fy:9,mt:1});
   Object.assign(P,{x:1,y:9,dir:2,moving:false,fx:1,fy:9,t:0});
-  S.cut={q:introScript(),i:0,started:false,done};
+  S.cut={q:S.day===2?introScript2():introScript(),i:0,started:false,done};
   document.getElementById("skipintro").hidden=false;uiDirty=true;
 }
 function endCut(finished){
@@ -1755,18 +1962,18 @@ let lastSave=0;
 function saveGame(){
   if(!S||S.screen!=="game"||S.cut)return;
   try{
-    const data={v:1,savedAt:Date.now(),diff:S.diff,wave:S.wave,waveDone:S.waveDone,t:S.t,gossipDone:!!S.gossipDone,introSeen:!!S.introSeen,activeTk:S.activeTk||null,
+    const data={v:1,savedAt:Date.now(),diff:S.diff,day:S.day||1,wave:S.wave,waveDone:S.waveDone,t:S.t,gossipDone:!!S.gossipDone,introSeen:!!S.introSeen,activeTk:S.activeTk||null,
       P:{x:P.x,y:P.y,dir:P.dir},ad:S.ad,npc:S.npc,dog:S.dog?{x:S.dog.x,y:S.dog.y}:null,
       tickets:S.tickets.map(t=>({id:t.id,status:t.status,flags:t.flags,transcript:t.transcript,contacted:t.contacted,atDesk:t.atDesk,badQs:t.badQs,asked:t.asked,result:t.result,
         notes:t.notes.map(n=>n.t),arrive:isFinite(t.arrive)?t.arrive:null,deadline:t.deadline||null,introduced:!!t.introduced}))};
     localStorage.setItem(SAVE_KEY,JSON.stringify(data));lastSave=performance.now();
   }catch(e){}
 }
-function saveSummary(d){if(!d)return"";const done=d.tickets.filter(t=>t.status==="done").length,total=d.tickets.filter(t=>t.status!=="skipped").length;
-  return DIFF[d.diff].label+" · "+(DIFF[d.diff].waves?"Wave "+Math.max(1,d.wave+1)+"/"+WAVES.length+" · ":"")+fmt(d.t)+" · "+done+"/"+total+" tickets closed"}
+function saveSummary(d){if(!d)return"";const dayTxt="Day "+(d.day||1)+" · ";const done=d.tickets.filter(t=>t.status==="done").length,total=d.tickets.filter(t=>t.status!=="skipped").length;
+  return dayTxt+DIFF[d.diff].label+" · "+(DIFF[d.diff].waves?"Wave "+Math.max(1,d.wave+1)+"/"+WAVES.length+" · ":"")+fmt(d.t)+" · "+done+"/"+total+" tickets closed"}
 function loadGame(){
   const d=readSave();if(!d||!DIFF[d.diff]){toast("Couldn't load your save.");return}
-  newGame(d.diff,{load:true});
+  newGame(d.diff,{load:true,day:d.day||1});
   Object.assign(S,{wave:d.wave,waveDone:d.waveDone,t:d.t,gossipDone:d.gossipDone,introSeen:true,activeTk:d.activeTk,ad:d.ad});
   for(const id in S.npc)if(d.npc&&d.npc[id])Object.assign(S.npc[id],d.npc[id],{moving:false});
   if(d.dog&&S.dog)Object.assign(S.dog,{x:d.dog.x,y:d.dog.y,fx:d.dog.x,fy:d.dog.y,mt:1});
@@ -1861,8 +2068,10 @@ function loop(ts){
    UI RENDER
    ========================================================= */
 function renderTitle(){const best=bestScore();return`<h1 class="logo" style="text-align:center;font-size:44px;margin:16px 0 18px">Ticket Rush</h1>
- <div class="win"><h2><span>Ridgeline Logistics: IT Help Desk</span><span>Day 1</span></h2><div class="wb">
+ <div class="win"><h2><span>Ridgeline Logistics: IT Help Desk</span><span>Day ${window.TITLE_DAY||1}</span></h2><div class="wb">
  <p style="margin-top:0">You're the new Tier 1 tech at Ridgeline Logistics. Answer calls, help walk-ups, and work tickets in Active Directory. Fix what you can, escalate what you can't, and document everything.</p>
+ <h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin-bottom:6px">Choose your day</h3>
+ <div class="daytabs">${Object.entries(DAYS).map(([k,d])=>`<button class="dtab ${String(window.TITLE_DAY||1)===k?"on":""}" data-a="pickday" data-day="${k}"><span class="dn">${d.name}</span><span class="dd">${d.desc}</span></button>`).join("")}</div>
  <h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin-bottom:6px">Choose your difficulty</h3>
  ${hasSave()?`<div class="diffs"><button class="diff rec" data-a="continue"><span class="dn">Continue your shift <span class="tag">Saved</span></span><span class="dd">${esc(saveSummary(readSave()))}</span></button></div><h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin:0 0 6px">Or start a new shift</h3>`:""}
  <div class="diffs">${Object.entries(DIFF).map(([k,d])=>`<button class="diff ${k==="beginner"&&!hasSave()?"rec":""}" data-a="start" data-diff="${k}"><span class="dn">${d.label}${k==="beginner"?' <span class="tag">Recommended</span>':""}</span><span class="dd">${d.desc}</span></button>`).join("")}</div>
@@ -1872,11 +2081,11 @@ function renderTitle(){const best=bestScore();return`<h1 class="logo" style="tex
 function renderEnd(){
   const list=counted(),total=totalScore(),avg=Math.round(total/list.length);
   const rank=avg>=85?"Ready for Tier 2":avg>=65?"Solid Tier 1":avg>=40?"Still learning":"Back to training";
-  return`<h1 class="logo" style="text-align:center;margin:10px 0 16px">Shift over</h1><div class="win"><h2><span>End of shift report</span><span>${fmt(Math.min(S.t,SHIFT_END))}</span></h2><div class="wb">
+  return`<h1 class="logo" style="text-align:center;margin:10px 0 16px">Day ${S.day||1} complete</h1><div class="win"><h2><span>End of shift report</span><span>${fmt(Math.min(S.t,SHIFT_END))}</span></h2><div class="wb">
   <p class="big">${avg}<span class="meta" style="font-size:18px"> average</span></p><p>Rank: <b>${rank}</b> &middot; Total ${total}</p>
   ${S.tickets.some(t=>t.status==="skipped")?'<p class="green">Bonus: you set up Priya correctly, so ticket #1006 never happened.</p>':""}
   ${list.map(t=>`<div class="scoreRow"><span>#${t.id} ${esc(t.title)}</span><span class="${t.result.total>=70?"green":t.result.total<40?"red":""}">${t.result.total}</span></div><p class="meta" style="margin:2px 0 8px">${esc(t.result.lines[0]||"")}</p>`).join("")}
-  <button class="btn primary" data-a="title" style="font-family:Silkscreen,monospace">Play again</button></div></div>`}
+  ${(S.day||1)===1?`<button class="btn primary" data-a="nextday" style="font-family:Silkscreen,monospace">Go to Day 2</button>`:""}<button class="btn ${(S.day||1)===1?"":"primary"}" data-a="title" style="font-family:Silkscreen,monospace">Back to title</button></div></div>`}
 function renderModal(){
   if(!S.modal)return"";if(S.modal.type==="settings")return renderSettings();if(S.modal.type==="help")return renderHelp();const tk=T(S.modal.id);
   if(S.modal.type==="note")return`<div class="modal"><div class="win" role="dialog" aria-modal="true"><h2><span>Resolution note INC0${tk.id}</span></h2><div class="wb"><p style="margin-top:0">Pick the note to attach before closing:</p><div class="qs">${tk.notes.map((n,i)=>`<button class="btn" data-a="note" data-i="${i}">${esc(n.t)}</button>`).join("")}</div><button class="btn" data-a="mclose">Back</button></div></div></div>`;
@@ -1920,7 +2129,9 @@ document.addEventListener("click",e=>{
   if(!b||b.disabled)return;
   const d=b.dataset,a=d.a,id=d.id?Number(d.id):null;
   switch(a){
-   case"start":if(hasSave()&&!confirm("Start a new shift? This replaces your saved game."))return;sfx.blip();clearSave();newGame(d.diff);return;
+   case"start":if(hasSave()&&!confirm("Start a new shift? This replaces your saved game."))return;sfx.blip();clearSave();newGame(d.diff,{day:window.TITLE_DAY||1});return;
+   case"pickday":window.TITLE_DAY=Number(d.day);renderUI();return;
+   case"nextday":window.TITLE_DAY=2;S={screen:"title"};renderUI();return;
    case"continue":sfx.blip();loadGame();return;
    case"skip-intro":endCut();return;
    case"savequit":saveGame();S={screen:"title"};document.getElementById("coach").innerHTML="";document.getElementById("callpanel").innerHTML="";renderUI();return;
@@ -1979,13 +2190,14 @@ document.addEventListener("click",e=>{
    case"d-reset-ok":{const dl=topDlg(),u=S.ad.users[dl.sam],r=dl.draft;
      if(r.p1!==r.p2){msg("Active Directory Domain Services","The passwords do not match. Type the new password in both text boxes.","err");break}
      if(!complex(r.p1)){msg("Active Directory Domain Services","Windows cannot complete the password change for "+u.name+" because:\n"+POLICY_TXT,"err");break}
+     if(r.must&&u.cannotChange){msg("Active Directory Domain Services","You cannot select both \"User must change password at next logon\" and \"User cannot change password\" for the same user.\n\nThis account has \"User cannot change password\" set on the Account tab.","err");break}
      u.resetAt=S.t;u.mustChange=r.must&&!u.neverExpires;if(r.unlock&&u.locked)unlockUser(u);closeDlg(dl);tick();
      msg("Active Directory Domain Services","The password for "+u.name+" has been changed."+(r.gen&&r.p1===r.gen?"\n\nTemp password: "+r.gen:"")+(r.must&&u.neverExpires?"\n\nNote: 'Password never expires' is set, so the user won't be forced to change it.":""),"info");break}
    case"d-genpw":{const dl=topDlg();if(dl&&dl.draft){const g=genTempPw();Object.assign(dl.draft,{p1:g,p2:g,gen:g})}break}
    case"d-nu-next":nuNext(topDlg());return;
    case"d-nu-back":{const dl=topDlg();dl.step=Math.max(1,dl.step-1);break}
    case"d-movesel":topDlg().draft.target=d.p;break;
-   case"d-move-ok":{const dl=topDlg(),k=dl.key,t=dl.draft.target;if(!t)break;if(k[0]==="u")S.ad.users[k.slice(2)].ou=t;else S.ad.computers[k.slice(2)].ou=t;closeDlg(dl);S.pc.selKey=null;toast("Moved to "+canon(t));break}
+   case"d-move-ok":{const dl=topDlg(),k=dl.key,t=dl.draft.target;if(!t)break;if(k[0]==="u")S.ad.users[k.slice(2)].ou=t;else{S.ad.computers[k.slice(2)].ou=t;S.ad.computers[k.slice(2)].movedAt=S.t}closeDlg(dl);S.pc.selKey=null;toast("Moved to "+canon(t));break}
    case"d-findnow":doFind(topDlg());break;
    case"d-findsel":{const dl=topDlg();if(e.ctrlKey||e.metaKey){dl.draft.sel=d.k;openCtx(e,d.k);return}if(dl.draft.sel===d.k){openProps(d.k);return}dl.draft.sel=d.k;break}
    case"d-findprops":{const dl=topDlg();if(dl.draft.sel){openProps(dl.draft.sel);return}break}
