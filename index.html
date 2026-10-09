@@ -111,6 +111,8 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 .coachcard.pcm{bottom:calc(52px + env(safe-area-inset-bottom,0px))}
 @media (max-width:600px){.coachcard{top:calc(6px + env(safe-area-inset-top,0px));bottom:auto;right:6px;font-size:18px}}
 .helpwin{max-width:720px}
+.audrow{display:flex;align-items:center;gap:10px;margin:6px 0 4px;flex-wrap:wrap}
+.audrow input{flex:1;min-width:140px;accent-color:#27457d}
 .hudlogo{color:inherit;text-decoration:none}
 .snav{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;max-width:1100px;margin:0 auto 14px;padding:4px 2px}
 .slogo{font-family:'Silkscreen',monospace;font-size:24px;color:var(--note);text-shadow:3px 3px 0 #000;text-decoration:none;letter-spacing:1px}
@@ -444,6 +446,7 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
     <span><kbd>Enter</kbd> or <kbd>Space</kbd> Talk / Use</span>
     <span><kbd>Esc</kbd> Back</span>
     <span><kbd>P</kbd> Pause</span>
+    <span><kbd>M</kbd> Music</span>
     <span><kbd>&minus;</kbd> <kbd>+</kbd> Zoom</span>
   </div>
   <div id="coach-inline"></div>
@@ -1886,7 +1889,8 @@ function renderHelp(){const tab=S.modal.tab||"basics";return`<div class="modal">
 function renderSettings(){return`<div class="modal"><div class="win" role="dialog" aria-modal="true" aria-label="Settings"><h2><span>Settings</span><span>Game is paused</span></h2><div class="wb">
  <p style="margin-top:0">Difficulty (you can change this any time):</p>
  <div class="diffs">${Object.entries(DIFF).map(([k,d])=>`<button class="diff ${S.diff===k?"rec":""}" data-a="setdiff" data-diff="${k}"><span class="dn">${d.label}${S.diff===k?' <span class="tag">Current</span>':""}</span><span class="dd">${d.desc}</span></button>`).join("")}</div>
- <button class="btn" data-a="mute">${muted?"Sound: off":"Sound: on"}</button><button class="btn" data-a="help">Help guide</button><button class="btn" data-a="tut-start">Replay the tour</button>
+ <div class="audrow"><label for="musvol">Music volume</label><input type="range" id="musvol" min="0" max="100" step="5" value="${Math.round(AUD.music*100)}"><span id="musval">${Math.round(AUD.music*100)}%</span></div>
+ <button class="btn" data-a="mute">${muted?"Sound effects: off":"Sound effects: on"}</button><button class="btn" data-a="help">Help guide</button><button class="btn" data-a="tut-start">Replay the tour</button>
  <div><button class="btn primary" data-a="mclose">Back to the game</button><button class="btn" data-a="savequit">Save &amp; quit to title</button></div></div></div></div>`}
 /* ---------- Notepad ---------- */
 const NP={el:null,ta:null};
@@ -2112,7 +2116,7 @@ function renderAbout(){
     <p>You play the new Tier 1 tech at Ridgeline Logistics, a fictional freight company. Phones ring, coworkers walk up to your desk, and HR sends requests. You verify who you're talking to, fix accounts in a realistic Active Directory, decide when to escalate, and write it all up in the ticketing system, just like on a real help desk.</p>
     <p>Every ticket is graded on four things: the fix, security, your resolution note, and how you treated the user. Security mistakes cost the most, because in real IT, doing it right matters more than doing it fast.</p></section>
    <section class="sec"><h2>How to play</h2><ul class="checks">
-    <li><b>Move:</b> arrow keys or WASD</li><li><b>Talk / use:</b> Enter or Space</li><li><b>Back:</b> Esc &nbsp;&middot;&nbsp; <b>Pause:</b> P &nbsp;&middot;&nbsp; <b>Zoom:</b> &minus; and +</li>
+    <li><b>Move:</b> arrow keys or WASD</li><li><b>Talk / use:</b> Enter or Space</li><li><b>Back:</b> Esc &nbsp;&middot;&nbsp; <b>Pause:</b> P &nbsp;&middot;&nbsp; <b>Music:</b> M &nbsp;&middot;&nbsp; <b>Zoom:</b> &minus; and +</li>
     <li><b>Difficulty:</b> Beginner (waves, slow clock, step-by-step help), Standard, or Expert (a real-time shift). You can change it any time in Settings.</li></ul></section>
    <section class="sec"><h2>FAQ</h2>${faq.map(f=>`<details class="faq"><summary>${f[0]}</summary><p>${f[1]}</p></details>`).join("")}</section>
    <section class="sec creator"><h2>The creator</h2><p class="cname">${CREATOR}</p><p>Ticket Rush is designed and built by ${CREATOR}. Follow along as new days and roles are built: <a href="https://instagram.com/ticketrushgame" target="_blank" rel="noopener">@ticketrushgame</a>.</p>
@@ -2137,6 +2141,48 @@ function applyRoute(){
   if(r==="support")setTimeout(()=>{const el=document.getElementById("support");if(el)el.scrollIntoView({behavior:"smooth"})},30);else document.getElementById("screen").scrollTo(0,0);
 }
 window.addEventListener("hashchange",applyRoute);
+
+/* =========================================================
+   MUSIC
+   ========================================================= */
+const MUSIC_FILES={title:"audio/title.mp3",intro:"audio/intro.mp3",office:"audio/office.mp3",tense:"audio/tense.mp3"};
+const AUDIO_KEY="ticketrush-audio";
+const AUD=(()=>{let o={music:0.4,sfx:true};try{Object.assign(o,JSON.parse(localStorage.getItem(AUDIO_KEY)||"{}"))}catch(e){}return o})();
+muted=!AUD.sfx;
+function saveAudio(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify({music:AUD.music,sfx:!muted}))}catch(e){}}
+const MUS={ctx:null,master:null,bufs:{},loading:{},cur:null,node:null,gain:null,unlocked:false};
+function musicUnlock(){
+  if(MUS.unlocked)return;MUS.unlocked=true;
+  try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();MUS.ctx=AC;if(AC.state==="suspended")AC.resume();
+    MUS.master=AC.createGain();MUS.master.gain.value=AUD.music;MUS.master.connect(AC.destination)}catch(e){}
+}
+function musicLoad(name){
+  if(MUS.bufs[name]||MUS.loading[name]||!MUS.ctx)return;
+  MUS.loading[name]=fetch(MUSIC_FILES[name]).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(a=>MUS.ctx.decodeAudioData(a)).then(b=>{MUS.bufs[name]=b}).catch(()=>{MUS.bufs[name]=null});
+}
+function musicPlay(name){
+  if(!MUS.ctx||!MUS.master)return;
+  if(name===MUS.cur)return;
+  const t=MUS.ctx.currentTime;
+  if(MUS.gain){const g=MUS.gain,n=MUS.node;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+1.2);setTimeout(()=>{try{n.stop()}catch(e){}},1400)}
+  MUS.cur=name;MUS.node=null;MUS.gain=null;
+  if(!name)return;
+  const buf=MUS.bufs[name];if(!buf){musicLoad(name);MUS.cur=null;return}
+  const src=MUS.ctx.createBufferSource();src.buffer=buf;src.loop=true;
+  const g=MUS.ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1,t+1.2);
+  src.connect(g);g.connect(MUS.master);src.start();MUS.node=src;MUS.gain=g;
+}
+function tenseNow(){if(!S||S.screen!=="game")return false;return S.tickets.some(t=>t.status==="open"&&t.contacted&&(t.id===1008||t.id===2005))}
+function musicWanted(){
+  if(!S)return null;
+  if(S.screen==="title"||S.screen==="end")return"title";
+  if(S.screen!=="game")return null;
+  if(S.cut)return S.day===2?"office":"intro";
+  return tenseNow()?"tense":"office";
+}
+function musicTick(){if(!MUS.unlocked)return;const w=musicWanted();if(w&&!MUS.bufs[w])musicLoad(w);if(w!==MUS.cur&&(w===null||MUS.bufs[w]))musicPlay(w)}
+function setMusicVol(v){AUD.music=Math.max(0,Math.min(1,v));if(MUS.master)MUS.master.gain.setTargetAtTime(AUD.music,MUS.ctx.currentTime,.05);saveAudio()}
+["pointerdown","keydown"].forEach(ev=>window.addEventListener(ev,()=>{musicUnlock();Object.keys(MUSIC_FILES).forEach(musicLoad)},{once:false,capture:true}));
 
 /* =========================================================
    INPUT + LOOP
@@ -2211,6 +2257,7 @@ function loop(ts){
     update(dt);draw(ts);hudTick();tutCheck();updateRing();if(S.tutPop&&ts-(S.tutT0||0)>700){S.tutPop=false}
     if(uiDirty){const ae=document.activeElement;const typing=ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&S.pc.open;if(!typing)renderUI()}
   }
+  musicTick();
   requestAnimationFrame(loop);
 }
 
@@ -2289,7 +2336,7 @@ document.addEventListener("click",e=>{
    case"savequit":saveGame();location.hash="#play";S={screen:"title"};document.getElementById("coach").innerHTML="";document.getElementById("callpanel").innerHTML="";renderUI();return;
    case"title":S={screen:"title"};document.getElementById("coach").innerHTML="";renderUI();return;
    case"pause":S.paused=!S.paused;break;
-   case"mute":muted=!muted;break;
+   case"mute":muted=!muted;saveAudio();break;
    case"skip":{if(DIFF[S.diff].waves){if(!S.waveDone)break;if(S.wave===WAVES.length-1){endShift();return}startWave(S.wave+1)}else{const next=S.tickets.filter(t=>t.status==="waiting").sort((x,y)=>x.arrive-y.arrive)[0];if(next){S.t=Math.max(S.t,next.arrive);tick()}}break}
    case"dadv":advance();return;
    case"dpick":e.stopPropagation();pick(Number(d.i));return;
@@ -2403,7 +2450,7 @@ function onBind(e){
     if(key==="logon"){const p=document.getElementById("nu-pre");if(p)p.value=v}}
   if(el.type==="radio"&&key==="expMode"&&v==="end"&&!dl.draft.expDate){dl.draft.expDate=TODAY;const di=document.querySelector('[data-bind="expDate"]');if(di)di.value=TODAY}
 }
-document.addEventListener("input",onBind);document.addEventListener("change",onBind);
+document.addEventListener("input",e=>{if(e.target&&e.target.id==="musvol"){setMusicVol(Number(e.target.value)/100);const v=document.getElementById("musval");if(v)v.textContent=e.target.value+"%";return}onBind(e)});document.addEventListener("change",onBind);
 document.addEventListener("keydown",e=>{
   if(document.activeElement&&document.activeElement.id==="np-text"){if(e.key==="Escape")document.activeElement.blur();return}
   if(S.screen==="title"&&(e.key==="Enter")){if(hasSave())loadGame();else newGame("beginner",{day:nextDayNum()});return}
@@ -2430,6 +2477,7 @@ document.addEventListener("keydown",e=>{
   if(e.key in KEYDIR){pressDir(KEYDIR[e.key]);e.preventDefault();return}
   if(e.key===" "||e.key==="Enter"||e.key==="e"||e.key==="E"){interact();e.preventDefault()}
   if(e.key==="p"||e.key==="P"){S.paused=!S.paused;uiDirty=true}
+  if(e.key==="m"||e.key==="M"){if(AUD.music>0){AUD.lastVol=AUD.music;setMusicVol(0);toast("Music off (press M to turn it back on)")}else{setMusicVol(AUD.lastVol||0.4);toast("Music on")}}
   if(e.key==="-"||e.key==="_"){window.ZOOM=Math.max(-2,(window.ZOOM||0)-1);resize()}
   if(e.key==="="||e.key==="+"){window.ZOOM=Math.min(3,(window.ZOOM||0)+1);resize()}
 });
