@@ -69,7 +69,7 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 .meta{color:var(--muted)}
 .red{color:var(--bad)}.green{color:var(--good)}
 .scoreRow{display:flex;justify-content:space-between;gap:8px;border-bottom:2px dotted var(--muted);padding:4px 0}
-.toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(54px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;z-index:60;width:min(78vw,320px);pointer-events:none}
+.toasts{position:fixed;left:50%;transform:translateX(-50%);top:calc(58px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:6px;z-index:60;width:min(78vw,320px);pointer-events:none}
 .toast{background:var(--note);color:var(--noteInk);border:3px solid var(--edge);box-shadow:3px 3px 0 var(--edge);padding:3px 9px;font-size:18px}
 .modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:14px}
 .modal .win{width:100%;max-height:90vh;overflow-y:auto}
@@ -189,6 +189,7 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 @media (prefers-reduced-motion:reduce){.wb-band{animation:wbFadeOut 2.6s forwards}.wb-big span,.wb-sub,.wb-chip{animation:none}}
 .callp{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:10px;width:min(340px,calc(100vw - 20px));z-index:56;background:#fff;color:#1d2833;border:1px solid #5b6b7a;box-shadow:0 6px 22px rgba(0,0,0,.45);font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-size:13px;line-height:1.35;display:flex;flex-direction:column;max-height:52vh;border-radius:4px;overflow:hidden}
 .callp.ingame{top:calc(60px + env(safe-area-inset-top,0px))}
+.callp.onpc{top:auto;bottom:calc(52px + env(safe-area-inset-bottom,0px));right:14px;max-height:46vh}
 .callh{background:#2f8f83;color:#fff;display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;flex:none}
 .callh .dot{width:9px;height:9px;border-radius:50%;background:#8dffa8;flex:none;animation:blink 1.2s steps(2) infinite}
 .callh b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -472,7 +473,7 @@ canvas{display:block;width:100%;image-rendering:pixelated;touch-action:none}
 /* =========================================================
    CONSTANTS + DIRECTORY
    ========================================================= */
-const SHIFT_END=480, TODAY="2026-10-03";
+const SHIFT_END=480, DAY_DATES={1:"2026-10-05",2:"2026-10-06"};let TODAY=DAY_DATES[1];
 const DIFF={
  beginner:{label:"Beginner",ms:4000,spdDiv:0,kb:"open",waves:true,desc:"Tickets come in small waves you start when you're ready. Slow clock, step-by-step KB articles, and no speed penalty."},
  standard:{label:"Standard",ms:2200,spdDiv:30,kb:"closed",waves:true,desc:"Waves with a normal clock. KB articles are there if you need them. Speed counts a little."},
@@ -871,7 +872,7 @@ function T(id){return S.tickets.find(t=>t.id===id)}
 function npcName(id){const u=S.ad&&S.ad.users[id];return u?u.name:(NAMES[id]||id)}
 function bestScore(){try{return Number(localStorage.getItem("ticketrush-best")||0)}catch(e){return 0}}
 function saveBest(v){try{if(v>bestScore())localStorage.setItem("ticketrush-best",String(v))}catch(e){}}
-function newGame(diff,opts){opts=opts||{};const day=DAYS[opts.day]?Number(opts.day):1;TICKETS=DAYS[day].tickets;WAVES=DAYS[day].waves;
+function newGame(diff,opts){opts=opts||{};const day=DAYS[opts.day]?Number(opts.day):1;TODAY=DAY_DATES[day]||DAY_DATES[1];TICKETS=DAYS[day].tickets;WAVES=DAYS[day].waves;
   diff=DIFF[diff]?diff:"beginner";const waves=DIFF[diff].waves;
   S={screen:"game",diff,day,wave:-1,waveDone:false,t:0,ad:(()=>{const a=initAD();if(day===2)day2Setup(a);return a})(),paused:false,dlg:null,modal:null,
     pc:{open:false,app:null,path:"Ridgeline/Users",selKey:null,collapsed:new Set(),dlgs:[],menu:null,mbar:null,adv:false,ffSel:null,ffView:"list",ffFilter:"active",ffClose:null},
@@ -1230,7 +1231,7 @@ function renderUserProps(d){
     <div class="frow"><button class="wbtn" data-a="d-madd">Add...</button><button class="wbtn" data-a="d-mrem" ${r.mSel&&r.mSel!=="Domain Users"?"":"disabled"}>Remove</button></div>
     <div class="frow"><label>Primary group:</label><span>Domain Users</span></div>`;break}
   case"Object":page=`<div>Canonical name of object:</div><div class="frow">${inp("x",canon(u.ou)+"/"+u.name,{ro:true})}</div><div class="frow"><label>Object class:</label><span>User</span></div><div class="frow"><label>Created:</label><span>${usDate(u.created)}</span></div>${chk("x",true,"Protect object from accidental deletion",{dis:true})}`;break;
-  case"Attribute Editor":{const ae=[["accountExpires",u.expires==="Never"?"(never)":usDate(u.expires)+" 11:59:59 PM"],["badPwdCount",u.badPw],["department",u.dept],["displayName",u.name],["employeeID",u.empId||"<not set>"],["lockoutTime",u.locked?"10/3/2026 (locked)":"0"],["mail",u.email],["mobile",u.mobile||"<not set>"],["pwdLastSet",u.resetAt!=null?"10/3/2026 "+fmt(u.resetAt):usDate(u.pwdLastSet)],["sAMAccountName",logonOf(d.sam)],["title",u.title],["userAccountControl",(u.enabled?"0x200 = (NORMAL_ACCOUNT)":"0x202 = (ACCOUNTDISABLE | NORMAL_ACCOUNT)")+(u.neverExpires?" + DONT_EXPIRE_PASSWORD":"")],["userPrincipalName",logonOf(d.sam)+"@ridgeline.local"],["whenCreated",usDate(u.created)]];
+  case"Attribute Editor":{const ae=[["accountExpires",u.expires==="Never"?"(never)":usDate(u.expires)+" 11:59:59 PM"],["badPwdCount",u.badPw],["department",u.dept],["displayName",u.name],["employeeID",u.empId||"<not set>"],["lockoutTime",u.locked?""+usDate(TODAY)+" (locked)":"0"],["mail",u.email],["mobile",u.mobile||"<not set>"],["pwdLastSet",u.resetAt!=null?usDate(TODAY)+" "+fmt(u.resetAt):usDate(u.pwdLastSet)],["sAMAccountName",logonOf(d.sam)],["title",u.title],["userAccountControl",(u.enabled?"0x200 = (NORMAL_ACCOUNT)":"0x202 = (ACCOUNTDISABLE | NORMAL_ACCOUNT)")+(u.neverExpires?" + DONT_EXPIRE_PASSWORD":"")],["userPrincipalName",logonOf(d.sam)+"@ridgeline.local"],["whenCreated",usDate(u.created)]];
     page=`<div>Attributes:</div><div class="ml" style="height:250px"><table class="attr"><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody>${ae.map(a=>`<tr><td>${a[0]}</td><td>${esc(a[1])}</td></tr>`).join("")}</tbody></table></div>`;break}
   }
   return wrapDlg(d,u.name+" Properties",`<div class="ptabs">${tabs.map(t=>`<button class="ptab ${d.tab===t?"on":""}" data-a="d-tab" data-t="${t}">${t}</button>`).join("")}</div><div class="ppage">${page}</div>`,B("OK","d-props-ok",{def:true})+B("Cancel","d-cancel")+B("Apply","d-props-apply"),true);
@@ -1319,7 +1320,7 @@ function renderPC(){
     <div class="icons"><button class="dicon" data-a="pc-launch" data-app="ff">${SVG.ff}FixFlow${open?` (${open})`:""}</button><button class="dicon" data-a="pc-launch" data-app="aduc">${SVG.aducBig}Active Directory Users and Computers</button></div>
     ${win}${pc.dlgs.map(renderDlg).join("")}${pc.menu?renderCtxMenu():""}</div>
    <div class="taskbar"><button class="tbtn ${pc.app==="ff"?"on":""}" data-a="pc-launch" data-app="ff">FixFlow${open?" ("+open+")":""}</button><button class="tbtn ${pc.app==="aduc"?"on":""}" data-a="pc-launch" data-app="aduc">Active Directory Users and Computers</button>
-    <button class="tbmini" data-a="np-toggle">Notepad</button><button class="tbmini" data-a="help">Help</button><button class="tbmini" data-a="settings">Settings</button><div class="tclock"><span id="pc-time">${fmt(S.t)}</span><span>10/3/2026</span></div><button class="tlogoff" data-a="pc-logoff">Log off</button></div>`;
+    <button class="tbmini" data-a="np-toggle">Notepad</button><button class="tbmini" data-a="help">Help</button><button class="tbmini" data-a="settings">Settings</button><div class="tclock"><span id="pc-time">${fmt(S.t)}</span><span>${usDate(TODAY)}</span></div><button class="tlogoff" data-a="pc-logoff">Log off</button></div>`;
 }
 
 /* =========================================================
@@ -1836,11 +1837,11 @@ function tutCheck(){if(S.tut!=null&&!S.tutShow&&performance.now()-(S.tutT0||0)>R
 function renderCall(){
   if(S.screen!=="game"||!S.activeTk)return"";const tk=T(S.activeTk);
   if(!tk||tk.status!=="open"||S.callHidden||!tk.contacted||tk.via==="ticket")return"";
-  if(!S.pc.open&&S.dlg)return"";
+  if(!S.pc.open&&S.dlg)return"";if(S.modal)return"";if(S.callMin==null)S.callMin=window.innerWidth<700;
   const name=tk.from.replace(/"/g,"");const label=tk.via==="phone"&&!tk.atDesk?"On call with":"Talking with";
   const opts=tk.dialog.map((q,i)=>({q,i})).filter(o=>qVisible(tk,o));
   const lines=tk.transcript.filter(m=>!(m.who==="System"&&/^You (answer|call|visit)/.test(m.text)));
-  return`<div class="callp ${S.pc.open?"":"ingame"}" role="region" aria-label="Conversation with ${esc(name)}"><div class="callh" data-a="call-min"><span class="dot"></span><b>${label} ${esc(name)}</b><span class="inc">INC0${tk.id}</span><button data-a="call-min" aria-label="${S.callMin?"Expand":"Minimize"}">${S.callMin?"&#9634;":"&#8211;"}</button><button data-a="call-hide" aria-label="Hide conversation">&#10005;</button></div>${S.callMin?"":`<div class="callb" id="callb">${lines.map(m=>`<p class="${m.me?"me":m.sys?"sys":""}"><b>${esc(m.who)}:</b> ${esc(m.text)}</p>`).join("")}</div>${opts.length?`<div class="callq"><small>Ask or say:</small>${opts.map(o=>`<button data-a="call-ask" data-i="${o.i}">${esc(o.q.q)}</button>`).join("")}</div>`:""}`}</div>`;
+  return`<div class="callp ${S.pc.open?"onpc":"ingame"}" role="region" aria-label="Conversation with ${esc(name)}"><div class="callh" data-a="call-min"><span class="dot"></span><b>${label} ${esc(name)}</b><span class="inc">INC0${tk.id}</span><button data-a="call-min" aria-label="${S.callMin?"Expand":"Minimize"}">${S.callMin?"&#9634;":"&#8211;"}</button><button data-a="call-hide" aria-label="Hide conversation">&#10005;</button></div>${S.callMin?"":`<div class="callb" id="callb">${lines.map(m=>`<p class="${m.me?"me":m.sys?"sys":""}"><b>${esc(m.who)}:</b> ${esc(m.text)}</p>`).join("")}</div>${opts.length?`<div class="callq"><small>Ask or say:</small>${opts.map(o=>`<button data-a="call-ask" data-i="${o.i}">${esc(o.q.q)}</button>`).join("")}</div>`:""}`}</div>`;
 }
 function renderCoach(inl){
   if(S.screen!=="game"||S.tut==null)return"";const st=TUT[S.tut];
@@ -2175,20 +2176,20 @@ function interact(){
   }
 }
 function faceHint(){
-  if(!S.npc||S.screen!=="game")return"";
+  if(!S.npc||S.screen!=="game"||S.cut)return"";
   const K=matchMedia("(hover:hover) and (pointer:fine)").matches?"Enter":"A";const[fx,fy]=facing();const id=npcAt(fx,fy);if(id)return K+": Talk to "+npcName(id);
   if(dogAt(fx,fy))return K+": Pet Byte";const o=OBJS[fx+","+fy];if(!o)return"";if(o.txt)return K+": "+(LOOK_HINT[o.type]||"Look");
   return{pc:K+": Use computer",phone:K+": Use phone",desk:"Desk "+o.label,printer:K+": Check printer",rack:"Server rack",cooler:K+": Water cooler",vending:K+": Vending machine"}[o.type]||"";
 }
 function goalHint(){
-  if(S.screen!=="game")return"";
+  if(S.screen!=="game"||S.cut)return"";
   if(DIFF[S.diff].waves&&S.waveDone)return S.wave===WAVES.length-1?"All waves cleared! Press Clock out when you're ready.":"Wave cleared! Explore, or press Start wave "+(S.wave+2)+" when ready.";
   if(DIFF[S.diff].waves&&S.wave<0)return"";
   const open=S.tickets.filter(t=>t.status==="open");
   if(open.some(t=>t.via==="phone"&&!t.contacted))return"Your desk phone is ringing!";
   const w=open.find(t=>t.via==="walk-up"&&!t.transcript.some(m=>m.me));if(w)return w.from+" is waiting at your desk.";
   const v=open.find(t=>t.via==="phone"&&t.contacted&&!t.atDesk&&t.dialog.some(q=>q.desk));if(v)return"Visit "+v.from+" at desk "+v.desk+".";
-  if(open.length)return open.length+" open ticket"+(open.length>1?"s":"")+". Work them on your computer.";
+  if(open.length)return open.length+" open ticket"+(open.length>1?"s. Work them":". Work it")+" on your computer.";
   return DIFF[S.diff].waves?"Next ticket in this wave is on its way...":S.tickets.some(t=>t.status==="waiting")?"Queue is clear. Explore, or skip ahead.":"All done.";
 }
 function hudTick(){
@@ -2227,7 +2228,7 @@ function renderTitle(){const best=bestScore();return`${siteNav("play")}<h1 class
  <div class="diffs">${Object.entries(DIFF).map(([k,d])=>`<button class="diff ${k==="beginner"&&!hasSave()?"rec":""}" data-a="start" data-diff="${k}"><span class="dn">${d.label}${k==="beginner"?' <span class="tag">Recommended</span>':""}</span><span class="dd">${d.desc}</span></button>`).join("")}</div>
  <h3 class="meta" style="font-family:Silkscreen,monospace;font-size:13px;font-weight:normal;margin-bottom:4px">House rules</h3>
  <ul style="margin-top:0"><li>Verify identity before any password reset.</li><li>No HR ticket, no new account.</li><li>Access changes need approval.</li><li>Anything shady goes to Security.</li></ul>
- <p class="meta" style="margin-bottom:0">Move with arrow keys / WASD or the D-pad. A (Space) talks and uses things.${best?" Best score: "+best+".":""}</p></div></div>`}
+ <p class="meta" style="margin-bottom:0">Move with arrow keys / WASD or the D-pad. A (Space) talks and uses things.${best?" Best shift score: "+best+".":""}</p></div></div>`}
 function renderEnd(){
   const list=counted(),total=totalScore(),avg=Math.round(total/list.length);
   const rank=avg>=85?"Ready for Tier 2":avg>=65?"Solid Tier 1":avg>=40?"Still learning":"Back to training";
